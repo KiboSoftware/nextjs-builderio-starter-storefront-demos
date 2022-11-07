@@ -21,6 +21,7 @@
     "generate-docs:hooks": "npx typedoc --entryPointStrategy expand hooks/ --out docs/hooks --readme none --exclude \"**/*+(.spec)+(.ts|.tsx)\" --exclude \"**/index.ts\" "
   },
   "dependencies": {
+    "@builder.io/react": "^2.0.9",
     "@emotion/cache": "latest",
     "@emotion/css": "latest",
     "@emotion/react": "latest",

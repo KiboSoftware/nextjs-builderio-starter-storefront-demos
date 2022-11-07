@@ -99,6 +99,9 @@ module.exports = {
       },
     ],
     isSubscriptionEnabled: true,
+    builderIO: {
+      apiKey: process.env.BUILDER_IO_API_KEY,
+    },
   },
   serverRuntimeConfig: {
     revalidate: process.env.GLOBAL_PAGE_REVALIDATE || 30,

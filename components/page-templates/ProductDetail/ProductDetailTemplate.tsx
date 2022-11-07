@@ -518,6 +518,8 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
           {children}
         </>
       )}
+
+      {children && children}
     </Grid>
   )
 }
