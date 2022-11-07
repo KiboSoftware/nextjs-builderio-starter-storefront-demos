@@ -1,8 +1,10 @@
+import { BuilderComponent, builder, Builder } from '@builder.io/react'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import getConfig from 'next/config'
 import { useRouter } from 'next/router'
 
 import { ProductDetailTemplate, ProductDetailSkeleton } from '@/components/page-templates'
+import { ProductRecommendations } from '@/components/product'
 import getCategoryTree from '@/lib/api/operations/get-category-tree'
 import getProduct from '@/lib/api/operations/get-product'
 import search from '@/lib/api/operations/get-product-search'
@@ -10,6 +12,25 @@ import { productGetters } from '@/lib/getters'
 import type { CategorySearchParams, CategoryTreeResponse } from '@/lib/types'
 
 import type { NextPage, GetStaticPropsContext } from 'next'
+
+const { publicRuntimeConfig } = getConfig()
+const builderIOApiKey = publicRuntimeConfig?.builderIO?.apiKey
+
+builder.init(builderIOApiKey)
+
+Builder.registerComponent(ProductRecommendations, {
+  name: 'ProductRecommendations',
+  inputs: [
+    {
+      name: 'title',
+      type: 'string',
+    },
+    {
+      name: 'productCodes',
+      type: 'KiboCommerceProductsList',
+    },
+  ],
+})
 
 export async function getStaticProps(context: GetStaticPropsContext) {
   const { params, locale } = context
@@ -19,9 +40,11 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   const product = await getProduct(productCode)
   const categoriesTree: CategoryTreeResponse = await getCategoryTree()
 
+  const sections = await builder.getAll('kibosection')
+  const section = sections.find((section) => section?.data?.slug === productCode)
+
   return {
     props: {
-      productCode,
       product,
       categoriesTree,
       ...(await serverSideTranslations(locale as string, ['common'])),
@@ -43,7 +66,7 @@ export async function getStaticPaths() {
 }
 
 const ProductDetailPage: NextPage = (props: any) => {
-  const { product } = props
+  const { product, section } = props
   const { isFallback } = useRouter()
 
   if (isFallback) {
@@ -53,7 +76,9 @@ const ProductDetailPage: NextPage = (props: any) => {
   const breadcrumbs = product ? productGetters.getBreadcrumbs(product) : []
   return (
     <>
-      <ProductDetailTemplate product={product} breadcrumbs={breadcrumbs} />
+      <ProductDetailTemplate product={product} breadcrumbs={breadcrumbs}>
+        {section && <BuilderComponent model="pdpsection" content={section} />}
+      </ProductDetailTemplate>
     </>
   )
 }

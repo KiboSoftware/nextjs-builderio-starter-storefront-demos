@@ -21,6 +21,7 @@ module.exports = {
       'cdn-sb.mozu.com',
       'encrypted-tbn0.gstatic.com',
       'images.ctfassets.net',
+      'cdn.builder.io',
     ],
   },
   publicRuntimeConfig: {
@@ -98,6 +99,9 @@ module.exports = {
       },
     ],
     isSubscriptionEnabled: true,
+    builderIO: {
+      apiKey: process.env.BUILDER_IO_API_KEY,
+    },
   },
   serverRuntimeConfig: {
     revalidate: process.env.GLOBAL_PAGE_REVALIDATE || 30,
