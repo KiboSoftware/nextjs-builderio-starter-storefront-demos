@@ -181,7 +181,10 @@ module.exports = {
     paypal: {
       clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
       currency: process.env.NEXT_PUBLIC_PAYPAL_CURRENCY || 'USD',
-      intent: 'authorize',
+      intent: 'authorize'
+    },
+    builderIO: {
+      apiKey: process.env.BUILDER_IO_API_KEY,
     },
   },
   serverRuntimeConfig: {
