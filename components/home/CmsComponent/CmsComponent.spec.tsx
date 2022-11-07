@@ -4,7 +4,6 @@ import { composeStories } from '@storybook/testing-react'
 import { render, screen } from '@testing-library/react'
 
 import * as stories from './CmsComponent.stories'
-
 import { cmsHomePageResultMock } from '@/__mocks__/stories/cmsHomePageResultMock'
 
 const { Common } = composeStories(stories)
