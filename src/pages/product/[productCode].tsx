@@ -46,6 +46,10 @@ export async function getStaticProps(
   if (!product) {
     return { notFound: true }
   }
+  // const section = await builder
+  //   .get('kibosection', { userAttributes: { slug: productCode } })
+  //   .promise()
+
   return {
     props: {
       product,
