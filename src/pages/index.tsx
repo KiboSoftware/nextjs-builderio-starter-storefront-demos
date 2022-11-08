@@ -379,7 +379,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const page = await builder
     .get('page', {
       userAttributes: {
-        urlPath: '/cms/homepage',
+        urlPath: '/homepage',
       },
     })
     .toPromise()
