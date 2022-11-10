@@ -2,8 +2,8 @@ import * as React from 'react'
 
 import { Container, Grid } from '@mui/material'
 
-import { ProductRecommendations } from '@/components/product'
-import { ProductRecommendationsProps } from '@/components/product/ProductRecommendations/ProductRecommendations'
+import { ProductRecommendations } from '../../../components/product'
+import { ProductRecommendationsProps } from '../../../components/product/ProductRecommendations/ProductRecommendations'
 
 interface CmsHomePageProductsProps {
   recentlyViewed: ProductRecommendationsProps

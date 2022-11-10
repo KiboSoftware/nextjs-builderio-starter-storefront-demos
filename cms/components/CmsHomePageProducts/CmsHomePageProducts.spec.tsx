@@ -3,8 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import '@testing-library/jest-dom/extend-expect'
 
+import { productSearchResultMock } from '../../../__mocks__/stories/productSearchResultMock'
 import * as stories from './CmsHomePageProducts.stories' // import all stories from the stories file
-import { productSearchResultMock } from '@/__mocks__/stories/productSearchResultMock'
 
 const { Common } = composeStories(stories)
 
