@@ -2,7 +2,7 @@ import { BuilderComponent, builder, Builder } from '@builder.io/react'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import getConfig from 'next/config'
 
-import { homePageResultMock } from '@/__mocks__/stories'
+import CmsHomePageProducts from '@/cms/components/CmsHomePageProducts/CmsHomePageProducts'
 import KiboHeroCarousel from '@/components/home/Carousel/KiboHeroCarousel'
 import ContentTile from '@/components/home/ContentTile/ContentTile'
 import SmallBanner from '@/components/home/SmallBanner/SmallBanner'
@@ -387,7 +387,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       page: page || null,
       categoriesTree,
-      carouselItem: homePageResultMock,
       ...(await serverSideTranslations(locale as string, ['common'])),
     },
   }
