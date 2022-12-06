@@ -1,8 +1,8 @@
-import { BuilderComponent, builder, Builder } from '@builder.io/react'
+import { BuilderComponent, builder } from '@builder.io/react'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import getConfig from 'next/config'
 
-import nextI18NextConfig from '../next-i18next.config'
+import nextI18NextConfig from '../../next-i18next.config'
 import getCategoryTree from '@/lib/api/operations/get-category-tree'
 import type { CategoryTreeResponse } from '@/lib/types'
 
@@ -15,7 +15,15 @@ builder.init(apiKey)
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { locale } = context
-  const pagename = context.params?.pagename
+
+  const pathnameArr = context.params?.pagename
+
+  let pagename
+  if (Array.isArray(pathnameArr) && pathnameArr?.length > 1) {
+    pagename = pathnameArr.join('/')
+  } else {
+    pagename = pathnameArr
+  }
 
   const categoriesTree: CategoryTreeResponse = await getCategoryTree()
 
