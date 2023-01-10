@@ -1,7 +1,10 @@
+import { BuilderComponent, builder, Builder } from '@builder.io/react'
 import getConfig from 'next/config'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 
+import { SmallBanner } from '@/components/home'
 import { CartTemplate } from '@/components/page-templates'
+import { ProductRecommendations } from '@/components/product'
 import { getCart } from '@/lib/api/operations/'
 import { MetaData, PageWithMetaData } from '@/lib/types'
 
@@ -26,6 +29,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const response = await getCart(req as NextApiRequest, res as NextApiResponse)
   const { serverRuntimeConfig } = getConfig()
   const isMultiShipEnabled = serverRuntimeConfig.isMultiShipEnabled
+
+  const cartTopContentSection = await builder.get('cart-top-content-section').promise()
+  const cartBottomContentSection = await builder.get('cart-bottom-content-section').promise()
 
   return {
     props: {
