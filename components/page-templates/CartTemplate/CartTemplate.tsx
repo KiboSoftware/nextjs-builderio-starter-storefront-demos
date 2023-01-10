@@ -39,6 +39,8 @@ import type { Maybe, CrCart, Location, CrCartItemInput, CrCartItem } from '@/lib
 export interface CartTemplateProps {
   isMultiShipEnabled: boolean
   cart: CrCart
+  cartTopContentSection?: any
+  cartBottomContentSection?: any
 }
 
 const styles = {
@@ -61,7 +63,7 @@ const styles = {
 const CartTemplate = (props: CartTemplateProps) => {
   const { isMultiShipEnabled } = props
   const { data: cart } = useCartQueries(props?.cart)
-
+  const { cartTopContentSection, cartBottomContentSection } = props
   const { t } = useTranslation('common')
   const theme = useTheme()
   const isMobileViewport = useMediaQuery(theme.breakpoints.down('md'))
@@ -214,6 +216,11 @@ const CartTemplate = (props: CartTemplateProps) => {
   return (
     <Grid container>
       {/* Header section */}
+      {cartTopContentSection && (
+        <Grid item xs={12}>
+          {cartTopContentSection}
+        </Grid>
+      )}
       <Grid item xs={12} md={8} sx={{ paddingX: { xs: 2, md: 0 }, paddingY: { xs: 2 } }}>
         <Box display="flex" gap={1}>
           <Typography variant="h1" gutterBottom>
@@ -281,6 +288,11 @@ const CartTemplate = (props: CartTemplateProps) => {
             </Button>
           </Box>
         </Box>
+      )}
+      {cartBottomContentSection && (
+        <Grid item xs={12}>
+          {cartBottomContentSection}
+        </Grid>
       )}
     </Grid>
   )
