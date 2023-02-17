@@ -27,7 +27,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const categoriesTree: CategoryTreeResponse = await getCategoryTree()
 
   const page = await builder
-    .get('page', {
+    .get('snoozimal-page', {
       userAttributes: {
         urlPath: `/${pagename}`,
       },
@@ -43,26 +43,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 }
 
-const PageNotFound = () => {
-  return (
-    <div
-      style={{
-        height: '300px',
-        color: 'red',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <h1>Page not found (404)</h1>
-    </div>
-  )
-}
-
 const Page = (props: any) => {
   const { page } = props
-
-  return <div>{page ? <BuilderComponent model="page" content={page} /> : <PageNotFound />}</div>
+  return (
+    <>
+      <BuilderComponent model="snoozimal-page" content={page} />
+    </>
+  )
 }
 
 export default Page
