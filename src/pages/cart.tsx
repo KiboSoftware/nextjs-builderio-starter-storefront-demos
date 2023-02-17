@@ -5,7 +5,6 @@ import getConfig from 'next/config'
 import { SmallBanner } from '@/components/home'
 import { CartTemplate } from '@/components/page-templates'
 import { ProductRecommendations } from '@/components/product'
-import { CategorySlider } from '@/components/product-listing'
 import { getCart } from '@/lib/api/operations/'
 
 import type { NextPage, GetServerSidePropsContext } from 'next'
@@ -69,16 +68,6 @@ Builder.registerComponent(ProductRecommendations, {
     {
       name: 'productCodes',
       type: 'KiboCommerceProductsList',
-    },
-  ],
-})
-
-Builder.registerComponent(CategorySlider, {
-  name: 'CategorySlider',
-  inputs: [
-    {
-      name: 'categoryCodes',
-      type: 'KiboCommerceCategoriesList',
     },
   ],
 })
