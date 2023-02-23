@@ -10,7 +10,7 @@ import getCategoryTree from '@/lib/api/operations/get-category-tree'
 import type { CategoryTreeResponse, NextPageWithLayout } from '@/lib/types'
 import ProActiv from '@/public/proactiv-routine.png'
 
-import type { GetServerSidePropsContext } from 'next'
+import type { GetStaticPropsContext } from 'next'
 
 interface HomePageProps {
   page: any
@@ -422,7 +422,7 @@ Builder.registerComponent(ContentTile, {
   ],
 })
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
+export async function getStaticProps(context: GetStaticPropsContext) {
   const { locale } = context
   const categoriesTree: CategoryTreeResponse = await getCategoryTree()
 
@@ -440,6 +440,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       categoriesTree,
       ...(await serverSideTranslations(locale as string, ['common'])),
     },
+    revalidate: 60,
   }
 }
 
