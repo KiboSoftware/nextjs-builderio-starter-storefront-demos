@@ -172,7 +172,7 @@ const ContentTile = ({ largeTileProps, smallTileProps, title }: ContentTileProps
           <Box sx={{ width: '100%' }}>
             <Grid container rowSpacing={1} columnSpacing={{ xs: 3, sm: 4, md: 4 }}>
               {smallTileProps?.map((tile: TileProps, index) => (
-                <Grid key={index} item xs={mobileView ? 6 : 3}>
+                <Grid key={index} item xs={mobileView ? 6 : 4}>
                   <ContentTiles
                     imgSource={tile.imgSource}
                     title={tile.title}
