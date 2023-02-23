@@ -374,7 +374,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const categoriesTree: CategoryTreeResponse = await getCategoryTree()
 
   const page = await builder
-    .get('page', {
+    .get('proactiv-page', {
       userAttributes: {
         urlPath: '/',
       },
@@ -394,7 +394,7 @@ const Home: NextPageWithLayout<HomePageProps> = (props) => {
   const { page } = props
   return (
     <>
-      <BuilderComponent model="page" content={page} />
+      <BuilderComponent model="proactiv-page" content={page} />
     </>
   )
 }
