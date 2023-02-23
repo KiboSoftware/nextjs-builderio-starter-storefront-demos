@@ -3,11 +3,12 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import getConfig from 'next/config'
 
 import CmsHomePageProducts from '../../cms/components/CmsHomePageProducts/CmsHomePageProducts'
-import { KiboHeroCarousel, ContentTile, SmallBanner } from '@/components/home'
+import { KiboHeroCarousel, ContentTile, SmallBanner, LargeBanner } from '@/components/home'
 import { FullWidthLayout } from '@/components/layout'
 import { ProductRecommendations } from '@/components/product'
 import getCategoryTree from '@/lib/api/operations/get-category-tree'
 import type { CategoryTreeResponse, NextPageWithLayout } from '@/lib/types'
+import ProActiv from '@/public/proactiv-routine.png'
 
 import type { GetServerSidePropsContext } from 'next'
 
@@ -73,26 +74,27 @@ Builder.registerComponent(KiboHeroCarousel, {
       defaultValue: [
         {
           imageUrl:
-            'https://cdn-sb.mozu.com/26507-m1/cms/files/655bb09f-e5f2-4027-8cf6-76d0363172d1',
+            'https://cdn-stg1.mozu.com/30707-m1/cms/files/e8d10d21-2653-4171-885e-0c5b3e215283?maxWidth=769',
           mobileImageUrl:
-            'https://cdn-sb.mozu.com/26507-m1/cms/files/655bb09f-e5f2-4027-8cf6-76d0363172d1',
+            'https://cdn-stg1.mozu.com/30707-m1/cms/files/e8d10d21-2653-4171-885e-0c5b3e215283?maxWidth=769',
           imageAlt: 'image Alt text',
-          title: 'Check Off Your List Event',
-          subtitle: 'Save up to 50%',
-          description: 'Shop early to get your holiday gifts on time.',
-          buttonText: 'Shop Holiday Items on Sale',
+          title: 'CLEAR SKIN,',
+          subtitle: 'BE MINE!',
+          description: "Science-backed routines with skin-loving ingredients you'll be crushing on",
+          buttonText: 'get started',
           buttonLink: 'https://',
         },
         {
           imageUrl:
-            'https://cdn-sb.mozu.com/26507-m1/cms/files/7b763015-5d76-4c3c-a5fd-6a14a476b56c',
+            'https://cdn-stg1.mozu.com/30707-m1/cms/files/205c05ae-dd32-4514-aae4-38762c732865?quality=80&maxWidth=769',
           mobileImageUrl:
-            'https://cdn-sb.mozu.com/26507-m1/cms/files/7b763015-5d76-4c3c-a5fd-6a14a476b56c',
+            'https://cdn-stg1.mozu.com/30707-m1/cms/files/205c05ae-dd32-4514-aae4-38762c732865?quality=80&maxWidth=769',
           imageAlt: 'image Alt text',
-          title: 'Save upto 70%',
-          subtitle: 'Check Off Your List Event',
-          description: 'Shop early to get your holiday gifts on time.',
-          buttonText: 'Shop Holiday Items on Sale',
+          title: ' 3 routines,',
+          subtitle: '1 perfect match.',
+          description:
+            "Discover the routine that's right for you with our dermatologist-developed skincare quiz.",
+          buttonText: 'take the quiz',
           contentPosition: 'right',
           buttonLink: 'https://',
         },
@@ -188,10 +190,57 @@ Builder.registerComponent(CmsHomePageProducts, {
     },
   ],
 })
-
+Builder.registerComponent(LargeBanner, {
+  name: 'LargeBanner',
+  inputs: [
+    {
+      name: 'bannerProps',
+      type: 'object',
+      defaultValue: {
+        title: 'Supercharge your routine - for free.',
+        subtitle1: 'Choose one of two free gifts when you subscribe.',
+        subtitle2:
+          'Clear Skin SPF 30 is a 3-in-1 formula that protects, hydrates, and controls shine without causing breakouts.',
+        buttonTitle: 'choose routine',
+        buttonUrl: '/',
+        backgroundImageUrl: ProActiv,
+      },
+      subFields: [
+        {
+          name: 'title',
+          type: 'string',
+        },
+        {
+          name: 'subtitle1',
+          type: 'string',
+        },
+        {
+          name: 'subtitle2',
+          type: 'string',
+        },
+        {
+          name: 'buttonTitle',
+          type: 'string',
+        },
+        {
+          name: 'buttonUrl',
+          type: 'string',
+        },
+        {
+          name: 'backgroundImageUrl',
+          type: 'string',
+        },
+      ],
+    },
+  ],
+})
 Builder.registerComponent(ContentTile, {
   name: 'ContentTile',
   inputs: [
+    {
+      name: 'title',
+      type: 'string',
+    },
     {
       name: 'largeTileProps',
       type: 'list',
@@ -320,6 +369,10 @@ Builder.registerComponent(ContentTile, {
         },
         {
           name: 'title',
+          type: 'string',
+        },
+        {
+          name: 'subtitle',
           type: 'string',
         },
         {
