@@ -48,7 +48,7 @@ const styles = {
     boxShadow: 'none',
     cursor: 'pointer',
     '&:hover': {
-      boxShadow: '0 2px 16px 4px rgb(40 44 63 / 7%)',
+      boxShadow: '0 2px 16px 4px rgb(11 32 61 / 7%)',
       '.quick-view': {
         opacity: 1,
       },

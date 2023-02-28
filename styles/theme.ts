@@ -15,7 +15,7 @@ export const grey = {
   // Thin borders, placeholder text
   500: '#C7C7C7',
   // Header Accent Color, page separator bar
-  300: '#EAEAEA',
+  300: '#af9268',
   // Order Summary Background
   100: '#F7F7F7',
   // Secondary Button (cancel button)
@@ -78,11 +78,11 @@ let theme = createTheme({
   },
   palette: {
     primary: {
-      main: '#2ea195',
-      light: '#C0E3DF',
+      main: '#0b203d',
+      light: '#af9268',
     },
     secondary: {
-      main: '#c0e3df',
+      main: '#af9268',
     },
     text: {
       primary: grey[900],
@@ -124,7 +124,7 @@ let theme = createTheme({
           },
         },
         containedInherit: {
-          backgroundColor: '#000',
+          backgroundColor: '#0b203d',
           borderWidth: 1,
           borderStyle: 'solid',
           boxShadow: 'none',

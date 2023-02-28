@@ -58,7 +58,7 @@ interface HideOnScrollProps {
 const topHeaderStyles = {
   wrapper: {
     display: 'flex',
-    backgroundColor: 'common.black',
+    backgroundColor: '#0b203d',
     height: 56,
     justifyContent: 'flex-end',
     zIndex: (theme: any) => theme.zIndex.modal,
@@ -98,7 +98,6 @@ const headerActionAreaStyles = {
 
 const kiboHeaderStyles = {
   appBarStyles: {
-    backgroundColor: 'grey.300',
     zIndex: (theme: any) => theme.zIndex.modal,
     scrollBehavior: 'smooth',
   },

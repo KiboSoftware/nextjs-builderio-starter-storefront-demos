@@ -20,13 +20,21 @@ export default function Footer(props: any) {
     <Box
       component="div"
       sx={{
-        p: 10,
-        marginTop: 10,
+        p: 5,
+        marginTop: 5,
         borderTop: '.5rem solid',
         borderColor: 'primary.main',
-        backgroundColor: 'common.black',
+        backgroundColor: '#0b203d',
       }}
     >
+      <Box mb={3} textAlign="center">
+        <KiboImage
+          alt={'Niquea.D logo'}
+          width={320}
+          height={89}
+          src={'https://cdn-sb.mozu.com/37531-m1/cms/files/1a3571c7-2741-4b4e-bcd7-9190c007ddcc'}
+        />
+      </Box>
       <Grid container spacing={{ xs: 2, md: 3 }} sx={{ color: 'common.white' }}>
         {sections.map((footerSection: any) => {
           return (
@@ -50,7 +58,7 @@ export default function Footer(props: any) {
         <Grid item xs={12} md={mdColumnWidth} alignContent="center" textAlign="center"></Grid>
       </Grid>
       <Grid container spacing={{ xs: 2, md: 3 }} sx={{ color: 'common.white', paddingTop: 5 }}>
-        <Grid item xs={12} md={mdColumnWidth} alignContent="center" textAlign="center">
+        <Grid item xs={12} md={12} alignContent="center" textAlign="center">
           <Typography
             variant="h4"
             sx={{ textTransform: 'uppercase', fontWeight: '600', marginBottom: 1 }}

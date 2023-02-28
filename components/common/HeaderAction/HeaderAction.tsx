@@ -55,7 +55,7 @@ const HeaderAction = (props: HeaderActionProps) => {
         <Icon
           fontSize={iconFontSize}
           sx={(theme: Theme) => ({
-            color: 'grey.900',
+            color: 'primary.main',
             [theme.breakpoints.down('md')]: {
               color: mobileIconColor,
             },
@@ -67,12 +67,12 @@ const HeaderAction = (props: HeaderActionProps) => {
           variant="body2"
           component="span"
           fontWeight="bold"
-          color="text.primary"
+          color="primary.main"
           sx={{ display: 'block', ...styles.hoverOver }}
         >
           {title}
         </Typography>
-        <Typography variant="body2" component="span" color="text.primary" sx={{ display: 'block' }}>
+        <Typography variant="body2" component="span" color="primary.main" sx={{ display: 'block' }}>
           {subtitle}
         </Typography>
       </Box>
