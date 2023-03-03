@@ -2,7 +2,7 @@ import { Box } from '@mui/system'
 import { StaticImageData } from 'next/image'
 
 import KiboImage from '../KiboImage/KiboImage'
-import Logo from '@/public/kibo_logo.png'
+import Logo from '@/public/ws-logo-full.webp'
 
 interface KiboLogoProps {
   logo?: string | StaticImageData // URL or File

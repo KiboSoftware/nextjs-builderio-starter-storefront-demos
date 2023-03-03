@@ -35,7 +35,8 @@ export const red = {
 // Create a base theme instance and define the basic design options
 let theme = createTheme({
   typography: {
-    fontFamily: 'Roboto, sans-serif',
+    fontFamily:
+      'Roboto,STHeiti,Verdana,Arial,Microsoft JhengHei,微軟正黑體,黑體-繁,新細明體,sans-serif',
     h1: {
       fontSize: '1.75rem', // 28px
       fontWeight: 'bold',

@@ -1,9 +1,21 @@
 import { BuilderComponent, builder, Builder } from '@builder.io/react'
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import getConfig from 'next/config'
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 
 import CmsHomePageProducts from '../../cms/components/CmsHomePageProducts/CmsHomePageProducts'
-import { KiboHeroCarousel, ContentTile, SmallBanner } from '@/components/home'
+import {
+  bannerCarouselMock,
+  promotionAndDeliveriesMock,
+  watsonCarouselMock,
+} from '@/__mocks__/stories'
+import { PromotionAndDeliveries } from '@/components/common'
+import {
+  KiboHeroCarousel,
+  ContentTile,
+  SmallBanner,
+  WatsonCarousel,
+  BannerCarousel,
+} from '@/components/home'
 import { FullWidthLayout } from '@/components/layout'
 import { ProductRecommendations } from '@/components/product'
 import getCategoryTree from '@/lib/api/operations/get-category-tree'
@@ -58,6 +70,89 @@ Builder.registerComponent(SmallBanner, {
         {
           name: 'backgroundColor',
           type: 'string',
+        },
+      ],
+    },
+  ],
+})
+Builder.registerComponent(WatsonCarousel, {
+  name: 'WatsonCarousel',
+  inputs: [
+    {
+      name: 'carouselItem',
+      type: 'list',
+      defaultValue: watsonCarouselMock,
+      subFields: [
+        {
+          name: 'imageUrl',
+          type: 'file',
+        },
+        {
+          name: 'imageAlt',
+          type: 'string',
+        },
+        {
+          name: 'imageLink',
+          type: 'string',
+        },
+      ],
+    },
+  ],
+})
+Builder.registerComponent(PromotionAndDeliveries, {
+  name: 'PromotionAndDeliveries',
+  inputs: [
+    {
+      name: 'promotionAndDeliveriesData',
+      type: 'list',
+      defaultValue: promotionAndDeliveriesMock.promotionAndDeliveriesData,
+      subFields: [
+        {
+          name: 'title',
+          type: 'string',
+        },
+        {
+          name: 'imageUrl',
+          type: 'file',
+        },
+        {
+          name: 'link',
+          type: 'string',
+        },
+      ],
+    },
+  ],
+})
+
+Builder.registerComponent(BannerCarousel, {
+  name: 'BannerCarousel',
+  inputs: [
+    {
+      name: 'bannerCarouselItems',
+      type: 'list',
+      defaultValue: bannerCarouselMock.bannerCarouselItems,
+      subFields: [
+        {
+          name: 'title',
+          type: 'string',
+        },
+        {
+          name: 'carouselItem',
+          type: 'list',
+          subFields: [
+            {
+              name: 'imageUrl',
+              type: 'file',
+            },
+            {
+              name: 'imageAlt',
+              type: 'string',
+            },
+            {
+              name: 'imageLink',
+              type: 'string',
+            },
+          ],
         },
       ],
     },
@@ -144,7 +239,7 @@ Builder.registerComponent(ProductRecommendations, {
     },
     {
       name: 'productCodes',
-      type: 'KiboCommerceProduct', // 'ShopifyCollectionHandle',
+      type: 'KiboCommerceProductsList', // 'ShopifyCollectionHandle',
     },
   ],
 })
@@ -374,7 +469,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const categoriesTree: CategoryTreeResponse = await getCategoryTree()
 
   const page = await builder
-    .get('page', {
+    .get('watson-page', {
       userAttributes: {
         urlPath: '/',
       },
@@ -394,7 +489,7 @@ const Home: NextPageWithLayout<HomePageProps> = (props) => {
   const { page } = props
   return (
     <>
-      <BuilderComponent model="page" content={page} />
+      <BuilderComponent model="watson-page" content={page} />
     </>
   )
 }
