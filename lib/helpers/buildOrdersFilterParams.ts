@@ -24,7 +24,7 @@ export const buildOrdersFilterParams = (params: {
 
   // To view order history page
   if (params.filters?.length) {
-    const searchFilters = []
+    const searchFilters: string[] = []
     for (const filters of params.filters) {
       const filter = filters.split('-')
       if (filter[0].toLowerCase() === 'm') {

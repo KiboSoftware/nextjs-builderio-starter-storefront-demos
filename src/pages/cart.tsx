@@ -1,6 +1,6 @@
 import { BuilderComponent, builder, Builder } from '@builder.io/react'
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import getConfig from 'next/config'
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 
 import { SmallBanner } from '@/components/home'
 import { CartTemplate } from '@/components/page-templates'
