@@ -13,6 +13,7 @@ const HamburgerIcon = () => {
     <HeaderAction
       icon={headerState?.isHamburgerMenuVisible ? CloseIcon : MenuIcon}
       iconFontSize={'medium'}
+      mobileIconColor="black"
       onClick={() => toggleHamburgerMenu()}
     />
   )

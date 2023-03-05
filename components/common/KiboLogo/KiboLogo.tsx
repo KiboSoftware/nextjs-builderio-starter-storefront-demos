@@ -14,7 +14,7 @@ const styles = {
   logoContainer: {
     width: {
       xs: 33,
-      md: 78,
+      md: 150,
     },
     height: {
       xs: 33,
@@ -22,7 +22,7 @@ const styles = {
     },
   },
   smallLogo: {
-    width: 40,
+    width: 110,
     height: 40,
   },
 }

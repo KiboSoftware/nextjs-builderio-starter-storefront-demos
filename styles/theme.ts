@@ -79,11 +79,11 @@ let theme = createTheme({
   },
   palette: {
     primary: {
-      main: '#2ea195',
+      main: '#009aa9',
       light: '#C0E3DF',
     },
     secondary: {
-      main: '#c0e3df',
+      main: '#e600a0',
     },
     text: {
       primary: grey[900],
@@ -115,13 +115,13 @@ let theme = createTheme({
           }),
         }),
         containedSecondary: {
-          backgroundColor: grey[50],
+          backgroundColor: '#e600a0',
           borderColor: grey[500],
           borderWidth: 1,
           borderStyle: 'solid',
           boxShadow: 'none',
           '&:hover': {
-            backgroundColor: grey[300],
+            backgroundColor: '#99036b',
           },
         },
         containedInherit: {

@@ -22,6 +22,7 @@ const CartIcon = ({ size }: IconProps) => {
   return (
     <HeaderAction
       subtitle={t('cart')}
+      mobileIconColor="black"
       icon={ShoppingCartIcon}
       badgeContent={itemCount}
       iconFontSize={size}

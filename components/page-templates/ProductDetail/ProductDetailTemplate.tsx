@@ -492,7 +492,7 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
               {isProductInWishlist ? (
                 <FavoriteRoundedIcon sx={{ color: 'red.900', marginRight: '14px' }} />
               ) : (
-                <FavoriteBorderRoundedIcon sx={{ color: 'grey.600', marginRight: '14px' }} />
+                <FavoriteBorderRoundedIcon sx={{ marginRight: '14px' }} />
               )}
               {t('add-to-wishlist')}
             </Button>

@@ -58,7 +58,7 @@ interface HideOnScrollProps {
 const topHeaderStyles = {
   wrapper: {
     display: 'flex',
-    backgroundColor: 'common.black',
+    backgroundColor: 'primary.main',
     height: 56,
     justifyContent: 'flex-end',
     zIndex: (theme: any) => theme.zIndex.modal,
@@ -73,7 +73,7 @@ const topHeaderStyles = {
 const headerActionAreaStyles = {
   wrapper: {
     display: 'flex',
-    backgroundColor: 'grey.300',
+    backgroundColor: 'common.white',
     height: 56,
   },
   container: {
@@ -97,7 +97,7 @@ const headerActionAreaStyles = {
 
 const kiboHeaderStyles = {
   appBarStyles: {
-    backgroundColor: 'grey.300',
+    backgroundColor: 'common.white',
     zIndex: (theme: any) => theme.zIndex.modal,
     scrollBehavior: 'smooth',
   },
@@ -105,7 +105,7 @@ const kiboHeaderStyles = {
     backgroundColor: 'common.white',
     borderWidth: '1px',
     borderStyle: 'solid',
-    borderColor: 'grey.500',
+    borderColor: 'primary.main',
   },
 }
 
@@ -193,7 +193,7 @@ const HeaderActionArea = (props: HeaderActionAreaProps) => {
           </Box>
         )}
         {shouldShowSearchIconInSmallHeader && (
-          <Box maxWidth="calc(100% - 501px)" sx={{ backgroundColor: 'grey.300' }}>
+          <Box maxWidth="calc(100% - 501px)">
             <MegaMenu categoryTree={categoriesTree} onBackdropToggle={setIsBackdropOpen} />
           </Box>
         )}
@@ -222,7 +222,7 @@ function HideOnScroll(props: HideOnScrollProps) {
 
   return (
     <Slide appear={false} direction="down" in={!trigger}>
-      <Box sx={{ ...(trigger && { height: 0 }) }}>{children}</Box>
+      <Box sx={{ ...(trigger && { height: 0, zIndex: 1300 }) }}>{children}</Box>
     </Slide>
   )
 }
@@ -278,10 +278,16 @@ const KiboHeader = (props: KiboHeaderProps) => {
     <>
       <AppBar position={isSticky ? 'sticky' : 'static'} sx={kiboHeaderStyles.appBarStyles}>
         <Backdrop open={isBackdropOpen} data-testid="backdrop" />
-
-        <HideOnScroll trigger={trigger}>
-          <TopHeader navLinks={navLinks} isElementVisible={isElementVisible} />
-        </HideOnScroll>
+        <Box
+          component={'section'}
+          sx={{
+            zIndex: (theme) => theme.zIndex.modal,
+          }}
+        >
+          <HideOnScroll trigger={trigger}>
+            <TopHeader navLinks={navLinks} isElementVisible={isElementVisible} />
+          </HideOnScroll>
+        </Box>
         <Box
           component={'section'}
           sx={{
