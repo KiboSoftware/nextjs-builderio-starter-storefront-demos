@@ -51,7 +51,7 @@ const ProductRecommendations = (props: ProductRecommendationsProps) => {
               },
               {
                 breakpoint: 990,
-                cols: 2,
+                cols: 3,
               },
               {
                 breakpoint: 600,

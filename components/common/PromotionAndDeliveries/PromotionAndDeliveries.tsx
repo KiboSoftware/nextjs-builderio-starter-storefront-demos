@@ -45,12 +45,16 @@ const PromotionAndDeliveries = (props: PromotionAndDeliveriesProps) => {
           gap={11}
           responsiveLayout={[
             {
+              breakpoint: 1500,
+              cols: 6,
+            },
+            {
               breakpoint: 1200,
               cols: 5,
             },
             {
-              breakpoint: 990,
-              cols: 3,
+              breakpoint: 900,
+              cols: 4,
             },
             {
               breakpoint: 600,
