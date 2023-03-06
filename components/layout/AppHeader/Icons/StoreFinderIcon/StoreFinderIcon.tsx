@@ -54,6 +54,7 @@ const StoreFinderIcon = ({ size }: IconProps) => {
       subtitle={locationCity && locationState ? `${locationCity}, ${locationState}` : t('view-all')}
       icon={FmdGoodIcon}
       iconFontSize={size}
+      mobileIconColor="black"
       onClick={handleClick}
     />
   )

@@ -1,6 +1,6 @@
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
-import { useTranslation } from 'next-i18next'
 import { useRouter } from 'next/router'
+import { useTranslation } from 'next-i18next'
 
 import { HeaderAction } from '@/components/common'
 import { useCartQueries } from '@/hooks'
@@ -22,6 +22,7 @@ const CartIcon = ({ size }: IconProps) => {
   return (
     <HeaderAction
       subtitle={t('cart')}
+      mobileIconColor="black"
       icon={ShoppingCartIcon}
       badgeContent={itemCount}
       iconFontSize={size}

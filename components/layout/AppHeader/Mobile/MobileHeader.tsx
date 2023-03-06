@@ -10,7 +10,7 @@ import { useHeaderContext } from '@/context'
 
 const MobileHeaderStyles = {
   container: {
-    backgroundColor: 'common.black',
+    backgroundColor: 'common.white',
     height: '55px',
     display: 'flex',
     justifyContent: 'space-between',
@@ -29,6 +29,7 @@ const MobileHeader = () => {
         <HeaderAction
           icon={SearchIcon}
           iconFontSize={'medium'}
+          mobileIconColor="black"
           onClick={() => toggleMobileSearchPortal()}
         />
 

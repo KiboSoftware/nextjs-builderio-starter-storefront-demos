@@ -1,7 +1,7 @@
 import { BuilderComponent, builder, Builder } from '@builder.io/react'
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import getConfig from 'next/config'
 import { useRouter } from 'next/router'
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 
 import { ProductDetailTemplate, ProductDetailSkeleton } from '@/components/page-templates'
 import { ProductRecommendations } from '@/components/product'

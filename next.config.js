@@ -22,6 +22,7 @@ module.exports = {
       'encrypted-tbn0.gstatic.com',
       'images.ctfassets.net',
       'cdn.builder.io',
+      'cdn.shopify.com',
     ],
   },
   publicRuntimeConfig: {
