@@ -24,7 +24,7 @@ const ProductRecommendations = (props: ProductRecommendationsProps) => {
 
   return (
     <>
-      {productCodes?.length > 0 && (
+      {productCodes?.length > 0 && products?.length > 0 && (
         <Grid item xs={12} sx={{ backgroundColor: 'grey.100', p: { xs: 1, md: 5 }, marginY: 2 }}>
           <Typography variant="h2" gutterBottom>
             {title}
