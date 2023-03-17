@@ -15,6 +15,7 @@ import type { NextPage, GetStaticPropsContext } from 'next'
 
 const { publicRuntimeConfig } = getConfig()
 const builderIOApiKey = publicRuntimeConfig?.builderIO?.apiKey
+const pdpSectionModelName = publicRuntimeConfig?.builderIO?.pdpSectionModelName
 
 builder.init(builderIOApiKey)
 
@@ -41,13 +42,14 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   const categoriesTree: CategoryTreeResponse = await getCategoryTree()
 
   const section = await builder
-    .get('kibosection', { userAttributes: { slug: productCode } })
+    .get(pdpSectionModelName, { userAttributes: { slug: productCode } })
     .promise()
 
   return {
     props: {
       product,
       categoriesTree,
+      section: section || null,
       ...(await serverSideTranslations(locale as string, ['common'])),
     },
     revalidate: serverRuntimeConfig.revalidate,
@@ -78,7 +80,7 @@ const ProductDetailPage: NextPage = (props: any) => {
   return (
     <>
       <ProductDetailTemplate product={product} breadcrumbs={breadcrumbs}>
-        {section && <BuilderComponent model="pdpsection" content={section} />}
+        {section && <BuilderComponent model={pdpSectionModelName} content={section} />}
       </ProductDetailTemplate>
     </>
   )

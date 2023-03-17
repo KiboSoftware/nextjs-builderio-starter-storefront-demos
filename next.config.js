@@ -102,6 +102,10 @@ module.exports = {
     isSubscriptionEnabled: true,
     builderIO: {
       apiKey: process.env.BUILDER_IO_API_KEY,
+      homePageModelName: 'watsons-page',
+      cartTopSectionModelName: 'watsons-cart-top-section',
+      cartBottomSectionModelName: 'watsons-cart-bottom-section',
+      pdpSectionModelName: 'watsons-pdp-section',
     },
   },
   serverRuntimeConfig: {
