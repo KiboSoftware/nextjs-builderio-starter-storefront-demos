@@ -1,6 +1,6 @@
 import { BuilderComponent, builder, Builder } from '@builder.io/react'
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import getConfig from 'next/config'
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 
 import CmsHomePageProducts from '../../cms/components/CmsHomePageProducts/CmsHomePageProducts'
 import { KiboHeroCarousel, ContentTile, SmallBanner } from '@/components/home'
@@ -17,6 +17,7 @@ interface HomePageProps {
 
 const { publicRuntimeConfig } = getConfig()
 const apiKey = publicRuntimeConfig?.builderIO?.apiKey
+const homePageModelName = publicRuntimeConfig?.builderIO?.homePageModelName
 
 builder.init(apiKey)
 
@@ -374,7 +375,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const categoriesTree: CategoryTreeResponse = await getCategoryTree()
 
   const page = await builder
-    .get('page', {
+    .get(homePageModelName, {
       userAttributes: {
         urlPath: '/',
       },
@@ -394,7 +395,7 @@ const Home: NextPageWithLayout<HomePageProps> = (props) => {
   const { page } = props
   return (
     <>
-      <BuilderComponent model="page" content={page} />
+      <BuilderComponent model={homePageModelName} content={page} />
     </>
   )
 }

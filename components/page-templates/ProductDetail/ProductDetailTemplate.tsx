@@ -15,8 +15,8 @@ import {
   Theme,
   MenuItem,
 } from '@mui/material'
-import { useTranslation } from 'next-i18next'
 import Link from 'next/link'
+import { useTranslation } from 'next-i18next'
 
 import {
   FulfillmentOptions,
@@ -514,11 +514,11 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
               </Box>
             )}
           </Grid>
-          {children}
+          <Grid item xs={12}>
+            {children && children}
+          </Grid>
         </>
       )}
-
-      {children && children}
     </Grid>
   )
 }
