@@ -1,6 +1,6 @@
 import { BuilderComponent, builder, Builder } from '@builder.io/react'
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import getConfig from 'next/config'
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 
 import { SmallBanner } from '@/components/home'
 import { CartTemplate } from '@/components/page-templates'
@@ -11,6 +11,8 @@ import type { NextPage, GetServerSidePropsContext } from 'next'
 
 const { publicRuntimeConfig } = getConfig()
 const apiKey = publicRuntimeConfig?.builderIO?.apiKey
+const cartTopSectionModelName = publicRuntimeConfig?.builderIO?.cartTopSectionModelName
+const cartBottomSectionModelName = publicRuntimeConfig?.builderIO?.cartBottomSectionModelName
 
 builder.init(apiKey)
 
@@ -78,8 +80,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { serverRuntimeConfig } = getConfig()
   const isMultiShipEnabled = serverRuntimeConfig.isMultiShipEnabled
 
-  const cartTopContentSection = await builder.get('cart-top-content-section').promise()
-  const cartBottomContentSection = await builder.get('cart-bottom-content-section').promise()
+  const cartTopContentSection = await builder.get(cartTopSectionModelName).promise()
+  const cartBottomContentSection = await builder.get(cartBottomSectionModelName).promise()
 
   return {
     props: {
@@ -100,13 +102,13 @@ const CartPage: NextPage = (props: any) => {
         {...props}
         cartTopContentSection={
           cartTopContentSection && (
-            <BuilderComponent model="cart-top-content-section" content={cartTopContentSection} />
+            <BuilderComponent model={cartTopSectionModelName} content={cartTopContentSection} />
           )
         }
         cartBottomContentSection={
           cartBottomContentSection && (
             <BuilderComponent
-              model="cart-bottom-content-section"
+              model={cartBottomSectionModelName}
               content={cartBottomContentSection}
             />
           )

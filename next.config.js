@@ -101,7 +101,10 @@ module.exports = {
     isSubscriptionEnabled: true,
     builderIO: {
       apiKey: process.env.BUILDER_IO_API_KEY,
-      modelName: 'page',
+      homePageModelName: 'page',
+      cartTopSectionModelName: 'cart-top-content-section',
+      cartBottomSectionModelName: 'cart-bottom-content-section',
+      pdpSectionModelName: 'kibosection',
     },
   },
   serverRuntimeConfig: {
