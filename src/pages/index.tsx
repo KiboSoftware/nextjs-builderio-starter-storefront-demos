@@ -29,6 +29,7 @@ interface HomePageProps {
 
 const { publicRuntimeConfig } = getConfig()
 const apiKey = publicRuntimeConfig?.builderIO?.apiKey
+const homePageModelName = publicRuntimeConfig?.builderIO?.homePageModelName
 
 builder.init(apiKey)
 
@@ -469,7 +470,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const categoriesTree: CategoryTreeResponse = await getCategoryTree()
 
   const page = await builder
-    .get('watson-page', {
+    .get(homePageModelName, {
       userAttributes: {
         urlPath: '/',
       },
@@ -489,7 +490,7 @@ const Home: NextPageWithLayout<HomePageProps> = (props) => {
   const { page } = props
   return (
     <>
-      <BuilderComponent model="watson-page" content={page} />
+      <BuilderComponent model={homePageModelName} content={page} />
     </>
   )
 }
