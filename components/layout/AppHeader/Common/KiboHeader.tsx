@@ -11,10 +11,10 @@ import {
   styled,
   Theme,
 } from '@mui/material'
+import { useTranslation } from 'next-i18next'
 import getConfig from 'next/config'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useTranslation } from 'next-i18next'
 
 import { headerActionAreaStyles, kiboHeaderStyles, topHeaderStyles } from './KiboHeader.styles'
 import { KiboLogo } from '@/components/common'
