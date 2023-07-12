@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react'
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import { Box, Button, Checkbox, FormControlLabel, NoSsr, Stack, Typography } from '@mui/material'
-import { useTranslation } from 'next-i18next'
 import getConfig from 'next/config'
+import { useTranslation } from 'next-i18next'
 
 import { CardDetailsForm } from '@/components/checkout'
 import { AddressForm, KiboPagination, AddressCard, KiboRadio } from '@/components/common'

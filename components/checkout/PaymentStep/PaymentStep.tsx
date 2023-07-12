@@ -15,11 +15,11 @@ import {
   Box,
   Tooltip,
 } from '@mui/material'
+import getConfig from 'next/config'
 import { useTranslation } from 'next-i18next'
 import { useReCaptcha } from 'next-recaptcha-v3'
 import { Controller, useForm } from 'react-hook-form'
 import * as yup from 'yup'
-import getConfig from 'next/config'
 
 import PayPalButton from './PayPalButton'
 import { CardDetailsForm, PurchaseOrderForm } from '@/components/checkout'
