@@ -15,6 +15,69 @@ interface CartPageType extends PageWithMetaData {
   cart?: CrCart
   isMultiShipEnabled?: boolean
 }
+
+const { publicRuntimeConfig } = getConfig()
+const apiKey = publicRuntimeConfig?.builderIO?.apiKey
+
+builder.init(apiKey)
+
+Builder.registerComponent(SmallBanner, {
+  name: 'SmallBanner',
+  inputs: [
+    {
+      name: 'bannerProps',
+      type: 'object',
+      defaultValue: {
+        title: 'Save up to 50% + Free Shipping',
+        subtitle: 'Valid through 10/31.',
+        callToAction: { title: 'Shop Now', url: '/category/deals' },
+        backgroundColor: '#A12E87',
+      },
+      subFields: [
+        {
+          name: 'title',
+          type: 'string',
+        },
+        {
+          name: 'subtitle',
+          type: 'string',
+        },
+        {
+          name: 'callToAction',
+          type: 'object',
+          subFields: [
+            {
+              name: 'title',
+              type: 'string',
+            },
+            {
+              name: 'url',
+              type: 'string',
+            },
+          ],
+        },
+        {
+          name: 'backgroundColor',
+          type: 'string',
+        },
+      ],
+    },
+  ],
+})
+
+Builder.registerComponent(ProductRecommendations, {
+  name: 'ProductRecommendations',
+  inputs: [
+    {
+      name: 'title',
+      type: 'string',
+    },
+    {
+      name: 'productCodes',
+      type: 'KiboCommerceProductsList',
+    },
+  ],
+})
 function getMetaData(): MetaData {
   return {
     title: 'Cart',
@@ -29,14 +92,16 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const response = await getCart(req as NextApiRequest, res as NextApiResponse)
   const { serverRuntimeConfig } = getConfig()
   const isMultiShipEnabled = serverRuntimeConfig.isMultiShipEnabled
-
-  const cartTopContentSection = await builder.get('cart-top-content-section').promise()
-  const cartBottomContentSection = await builder.get('cart-bottom-content-section').promise()
+  const { cartTopSection, cartBottomSection } = publicRuntimeConfig?.builderIO?.modelKeys || {}
+  const cartTopContentSection = await builder.get(cartBottomSection).promise()
+  const cartBottomContentSection = await builder.get(cartTopSection).promise()
 
   return {
     props: {
       isMultiShipEnabled,
       cart: response?.currentCart || null,
+      cartTopContentSection: cartTopContentSection || null,
+      cartBottomContentSection: cartBottomContentSection || null,
       metaData: getMetaData(),
       ...(await serverSideTranslations(locale as string, ['common'])),
     },
@@ -44,9 +109,23 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 const CartPage: NextPage<CartPageType> = (props: any) => {
+  const { cartTopContentSection, cartBottomContentSection } = props
+  const { cartTopSection, cartBottomSection } = publicRuntimeConfig?.builderIO?.modelKeys || {}
   return (
     <>
-      <CartTemplate {...props} />
+      <CartTemplate
+        {...props}
+        cartTopContentSection={
+          cartTopContentSection && (
+            <BuilderComponent model={cartTopSection} content={cartTopContentSection} />
+          )
+        }
+        cartBottomContentSection={
+          cartBottomContentSection && (
+            <BuilderComponent model={cartBottomSection} content={cartBottomContentSection} />
+          )
+        }
+      />
     </>
   )
 }

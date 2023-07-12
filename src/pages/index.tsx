@@ -374,7 +374,7 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   const { serverRuntimeConfig } = getConfig()
 
   const page = await builder
-    .get('page', {
+    .get(publicRuntimeConfig?.builderIO?.modelKeys?.defaultPage, {
       userAttributes: {
         urlPath: '/',
       },
@@ -395,7 +395,10 @@ const Home: NextPageWithLayout<HomePageProps> = (props) => {
   const { page } = props
   return (
     <>
-      <BuilderComponent model="page" content={page} />
+      <BuilderComponent
+        model={publicRuntimeConfig?.builderIO?.modelKeys?.defaultPage}
+        content={page}
+      />
     </>
   )
 }

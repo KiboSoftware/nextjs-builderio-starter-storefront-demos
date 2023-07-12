@@ -185,6 +185,13 @@ module.exports = {
     },
     builderIO: {
       apiKey: process.env.BUILDER_IO_API_KEY,
+      modelKeys: {
+        defaultPage: 'page',
+        productDetailSection: 'product-detail-section',
+        cartBottomSection: 'cart-bottom-content-section',
+        cartTopSection: 'cart-top-content-section',
+        categoryTopSection: 'category-section',
+      },
     },
   },
   serverRuntimeConfig: {
