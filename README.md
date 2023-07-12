@@ -1,6 +1,7 @@
 <h2 align="center">KiboCommerce & Next.JS & BuilderIO</h2>
 
 <p align="center">
+
 This is a headless ecommerce starter kit for KiboCommerce platform using Next.JS and BuilderIO<br>
 </p>
 
