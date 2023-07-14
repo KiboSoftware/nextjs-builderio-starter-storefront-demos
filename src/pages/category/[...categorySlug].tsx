@@ -59,7 +59,7 @@ export async function getStaticPaths() {
   const paths = categoriesTree.map((cat:any) => ({
       categoryCode: cat.categoryCode,
       slug: cat.content?.slug as string,
-    }).map((each: any) => {
+    })).map((each: any) => {
     const urlSegment = each.slug
     const categoryCode = each.categoryCode
     if (urlSegment) {
