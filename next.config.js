@@ -22,21 +22,8 @@ module.exports = {
       'encrypted-tbn0.gstatic.com',
       'images.ctfassets.net',
       'cdn.builder.io',
-      'totalwine.com'
-    ],
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'cdn-sb.mozu.com',
-        port: '',
-        pathname: '**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'http',
-        port: '',
-        pathname: '**',
-      },
+      'totalwine.com',
+      'www.totalwine.com'
     ],
     deviceSizes: [
       100, 240, 340, 380, 400, 450, 500, 550, 600, 640, 750, 828, 1080, 1200, 1920, 2048, 3840,
