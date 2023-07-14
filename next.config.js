@@ -22,7 +22,7 @@ module.exports = {
       'encrypted-tbn0.gstatic.com',
       'images.ctfassets.net',
       'cdn.builder.io',
-      'http',
+      'totalwine.com'
     ],
     remotePatterns: [
       {
