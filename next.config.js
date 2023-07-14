@@ -136,7 +136,7 @@ module.exports = {
     revalidate: process.env.GLOBAL_PAGE_REVALIDATE || 30,
     pageSize: 1000,
     cacheKey: 'categoryTree',
-    cacheTimeOut: 10000,
+    cacheTimeOut: 60,
     isMultiShipEnabled: false,
     recaptcha: {
       reCaptchaKey: process.env.RECAPTCHA_KEY,
