@@ -55,9 +55,11 @@ const walk = (category: Maybe<PrCategory>, categoryCodes: any[] = []) => {
 
 export async function getStaticPaths() {
   const categoriesTree = await getCategoryTree()
-
-  const getAllCategoryCodes = (categoryTree: any) => categoryTree.flatMap((c: any) => walk(c))
-  const paths = getAllCategoryCodes(categoriesTree).map((each: any) => {
+  // const getAllCategoryCodes = (categoryTree: any) => categoryTree.flatMap((c: any) => walk(c))
+  const paths = categoriesTree.map(cat => ({
+      categoryCode: category.categoryCode,
+      slug: category.content?.slug as string,
+    }).map((each: any) => {
     const urlSegment = each.slug
     const categoryCode = each.categoryCode
     if (urlSegment) {
