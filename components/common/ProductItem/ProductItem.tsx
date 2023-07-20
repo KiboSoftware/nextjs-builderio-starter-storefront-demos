@@ -32,6 +32,7 @@ export interface ProductItemProps {
   salePrice?: string
   qty?: number
   isPickupItem?: boolean
+  fulfillmentLabelKey?: string
   expectedDeliveryDate?: string
   purchaseLocation?: string
   link?: string
@@ -67,6 +68,7 @@ const ProductItem = (props: ProductItemProps) => {
     link,
     children,
     width = '25%',
+    fulfillmentLabelKey = 'pickup',
     subscriptionFrequency,
     showChangeStoreLink,
     onStoreLocatorClick,
@@ -167,7 +169,7 @@ const ProductItem = (props: ProductItemProps) => {
         <>
           <Box sx={{ display: 'inline-flex' }} px={2}>
             <KeyValueDisplay
-              option={{ name: t('pickup'), value: purchaseLocation }}
+              option={{ name: t(fulfillmentLabelKey), value: purchaseLocation }}
               variant="caption"
             />
           </Box>

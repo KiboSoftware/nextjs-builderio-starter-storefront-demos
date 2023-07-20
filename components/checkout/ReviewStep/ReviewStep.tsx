@@ -290,7 +290,18 @@ const ReviewStep = (props: ReviewStepProps) => {
           <Divider sx={{ mt: '1.ZZ438rem', mb: '1.188rem' }} />
         </Stack>
       )}
-
+      {orderGetters.getDeliveryItems(checkout as any).length > 0 && (
+        <Stack gap={4}>
+          <Typography variant="h3" component="h3" sx={{ fontWeight: 'bold' }} color="text.primary">
+            {t('delivery')}
+          </Typography>
+          <ProductItemList
+            items={orderGetters.getDeliveryItems(checkout as any)}
+            testId={'review-pickup-items'}
+          />
+          <Divider sx={{ mt: '1.ZZ438rem', mb: '1.188rem' }} />
+        </Stack>
+      )}
       <OrderPrice {...orderPriceProps} />
 
       <Box sx={{ mt: '31px', mb: '35px' }}>

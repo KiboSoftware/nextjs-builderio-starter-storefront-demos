@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { Typography, Box, MenuItem, Divider } from '@mui/material'
 import { useTranslation } from 'next-i18next'
@@ -27,6 +27,11 @@ export type ShipItemListProps = {
   onShippingMethodChange?: (value: string, name?: string) => void
 }
 export type PickupItemListProps = {
+  isShipItemsPresent: boolean
+  pickupItems: Maybe<CrOrderItem>[]
+  onClickChangeStore?: () => void
+}
+export type DeliveryItemListProps = {
   isShipItemsPresent: boolean
   pickupItems: Maybe<CrOrderItem>[]
   onClickChangeStore?: () => void
@@ -98,17 +103,46 @@ const PickupItemList = (pickupProps: PickupItemListProps) => {
 
   return (
     <Box data-testid="pickup-items">
-      {isShipItemsPresent && (
-        <>
-          <Divider orientation="horizontal" flexItem />
-          <Box pt={2} pb={3}>
-            <Typography sx={styles.shippingType} py={2} data-testid="pickup-title">
-              {t('pickup')}
-            </Typography>
-          </Box>
-        </>
-      )}
+      <Divider orientation="horizontal" flexItem />
+      <Box pt={2} pb={3}>
+        <Typography sx={styles.shippingType} py={2} data-testid="pickup-title">
+          {t('pickup')}
+        </Typography>
+      </Box>
+      <Box>
+        <ProductItemList
+          items={pickupItems}
+          storePickupAddresses={storePickupAddress}
+          isPickupItem={isPickupItem}
+          expectedDeliveryDate={expectedDeliveryDate}
+          showChangeStoreLink={false}
+          onClickChangeStore={onClickChangeStore}
+        />
+      </Box>
+    </Box>
+  )
+}
 
+const DeliveryItemList = (pickupProps: DeliveryItemListProps) => {
+  const { isShipItemsPresent, pickupItems, onClickChangeStore } = pickupProps
+  const { t } = useTranslation('common')
+  const expectedDeliveryDate = orderGetters.getExpectedDeliveryDate(pickupItems as CrOrderItem[])
+  const isPickupItem = pickupItems.length > 0
+
+  const fulfillmentLocationCodes = orderGetters.getFulfillmentLocationCodes(
+    pickupItems as CrOrderItem[]
+  )
+  const { data: locations } = useGetStoreLocations({ filter: fulfillmentLocationCodes })
+  const storePickupAddress = storeLocationGetters.getLocations(locations)
+
+  return (
+    <Box data-testid="pickup-items">
+      <Divider orientation="horizontal" flexItem />
+      <Box pt={2} pb={3}>
+        <Typography sx={styles.shippingType} py={2} data-testid="pickup-title">
+          Delivery
+        </Typography>
+      </Box>
       <Box>
         <ProductItemList
           items={pickupItems}
@@ -136,6 +170,14 @@ const ShippingMethod = (props: ShippingMethodProps) => {
   const { t } = useTranslation('common')
   const shippingMethodRef = useRef()
   const [selectedShippingMethod, setSelectedShippingMethod] = useState(selectedShippingMethodCode)
+  const deliveryItems = useMemo(
+    () => orderGetters.getDeliveryItems({ items: pickupItems } as any),
+    pickupItems
+  )
+  const pickupInStoreItems = useMemo(
+    () => orderGetters.getPickupItems({ items: pickupItems } as any),
+    pickupItems
+  )
 
   useEffect(() => {
     shippingMethodRef.current &&
@@ -162,10 +204,17 @@ const ShippingMethod = (props: ShippingMethodProps) => {
           shipItems={shipItems}
         />
       ) : null}
-      {pickupItems?.length ? (
+      {pickupInStoreItems?.length ? (
         <PickupItemList
           isShipItemsPresent={Boolean(shipItems?.length)}
-          pickupItems={pickupItems}
+          pickupItems={pickupInStoreItems}
+          onClickChangeStore={onStoreLocatorClick}
+        />
+      ) : null}
+      {deliveryItems?.length ? (
+        <DeliveryItemList
+          isShipItemsPresent={Boolean(shipItems?.length)}
+          pickupItems={deliveryItems}
           onClickChangeStore={onStoreLocatorClick}
         />
       ) : null}

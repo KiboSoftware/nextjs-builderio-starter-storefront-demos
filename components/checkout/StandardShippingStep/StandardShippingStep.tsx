@@ -49,8 +49,7 @@ const StandardShippingStep = (props: ShippingProps) => {
     checkoutShippingContact.id = DefaultId.ADDRESSID
   }
   const shipItems = orderGetters.getShipItems(checkout)
-  const pickupItems = orderGetters.getPickupItems(checkout)
-
+  const pickupItems = orderGetters.getStoreItems(checkout)
   const [isAddressSavedToAccount, setIsAddressSavedToAccount] = useState<boolean>(false)
   const [validateForm, setValidateForm] = useState<boolean>(false)
   const [checkoutId, setCheckoutId] = useState<string | null | undefined>(undefined)
@@ -243,9 +242,13 @@ const StandardShippingStep = (props: ShippingProps) => {
   }, [stepStatus])
 
   useEffect(() => {
-    selectedShippingAddressId && checkoutShippingMethodCode && shouldShowAddAddressButton
-      ? setStepStatusValid()
-      : setStepStatusIncomplete()
+    if (!shipItems.length) {
+      setStepStatusValid()
+    } else {
+      selectedShippingAddressId && checkoutShippingMethodCode && shouldShowAddAddressButton
+        ? setStepStatusValid()
+        : setStepStatusIncomplete()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedShippingAddressId, checkout, shouldShowAddAddressButton])
 
@@ -256,9 +259,9 @@ const StandardShippingStep = (props: ShippingProps) => {
   if (!shipItems.length) {
     return (
       <>
-        <Typography variant="h2" component="h2" sx={{ fontWeight: 'bold' }}>
+        {/* <Typography variant="h2" component="h2" sx={{ fontWeight: 'bold' }}>
           {t('pickup')}
-        </Typography>
+        </Typography> */}
         <ShippingMethod
           showTitle={false}
           shipItems={shipItems}

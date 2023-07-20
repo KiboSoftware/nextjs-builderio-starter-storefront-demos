@@ -46,8 +46,19 @@ const getItemsByFulfillment = (order: CrOrder, fulfillmentMethod: string): CrOrd
     ) as CrOrderItem[]) || []
   )
 }
-const getPickupItems = (order: CrOrder): CrOrderItem[] => {
-  return getItemsByFulfillment(order, FulfillmentOptions.PICKUP)
+const isShipItem = (item: any) => item?.fulfillmentMethod === FulfillmentOptions.SHIP
+const isStorePickupItem = (item: any) => item?.fulfillmentMethod === FulfillmentOptions.PICKUP
+const isStoreDeliveryItem = (item: any) => item?.fulfillmentMethod === FulfillmentOptions.DELIVERY
+
+const getPickupItems = (order: CrOrder): CrOrderItem[] =>
+  getItemsByFulfillment(order, FulfillmentOptions.PICKUP)
+const getDeliveryItems = (order: CrOrder): CrOrderItem[] =>
+  getItemsByFulfillment(order, FulfillmentOptions.DELIVERY)
+const getStoreItems = (order: CrOrder): CrOrderItem[] => {
+  return [
+    ...getItemsByFulfillment(order, FulfillmentOptions.PICKUP),
+    ...getItemsByFulfillment(order, FulfillmentOptions.DELIVERY),
+  ]
 }
 const getShipItems = (order: CrOrder): CrOrderItem[] =>
   getItemsByFulfillment(order, FulfillmentOptions.SHIP)
@@ -80,7 +91,10 @@ const getShippingAddress = (order: CrOrder) =>
 const getFulfillmentLocationCodes = (cartItems: (CrCartItem | CrOrderItem)[]): string => {
   const locationCodes = Array.from(
     cartItems.reduce((set, item) => {
-      if (item?.fulfillmentMethod === FulfillmentOptions.PICKUP) {
+      if (
+        item?.fulfillmentMethod === FulfillmentOptions.PICKUP ||
+        item?.fulfillmentMethod === FulfillmentOptions.DELIVERY
+      ) {
         set.add(`code eq ${item?.fulfillmentLocationCode}`)
       }
       return set
@@ -303,6 +317,8 @@ export const orderGetters = {
   getSubtotal,
   getDiscountedSubtotal,
   getPickupItems,
+  getStoreItems,
+  getDeliveryItems,
   getShipItems,
   getCartItemId,
   getProductQuantity,
@@ -316,4 +332,7 @@ export const orderGetters = {
   getPaymentMethods,
   getOrderStatus,
   getFinalOrderPayment,
+  isShipItem,
+  isStoreDeliveryItem,
+  isStorePickupItem,
 }

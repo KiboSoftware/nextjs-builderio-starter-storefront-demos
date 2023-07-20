@@ -59,11 +59,13 @@ const ViewOrderDetails = (props: ViewOrderDetailsProps) => {
   const orderNumber = orderGetters.getOrderNumber(order)
   const orderTotal = orderGetters.getTotal(order)
   const submittedDate = orderGetters.getSubmittedDate(order)
+  const storeFulfillmentItems = orderGetters.getStoreItems(order)
   const pickupItems = orderGetters.getPickupItems(order)
+  const deliveryItems = orderGetters.getDeliveryItems(order)
   const shipItems = orderGetters.getShipItems(order)
   const fulfillmentContactAddress = orderGetters.getShippingAddress(order)
   const payment = orderGetters.getFinalOrderPayment(order)
-  const fulfillmentLocationCodes = orderGetters.getFulfillmentLocationCodes(pickupItems)
+  const fulfillmentLocationCodes = orderGetters.getFulfillmentLocationCodes(storeFulfillmentItems)
   const shippedTo = orderGetters.getShippedTo(order)
   const orderStatus = orderGetters.getOrderStatus(order)
 
@@ -183,6 +185,31 @@ const ViewOrderDetails = (props: ViewOrderDetailsProps) => {
                 </Box>
                 <ProductItemList
                   items={pickupItems}
+                  showAddress={true}
+                  storePickupAddresses={storePickupAddress}
+                  width="15%"
+                />
+              </Box>
+              <Divider sx={{ ...styles.divider }} />
+            </Box>
+          )}
+          {/* delivery orders */}
+          {deliveryItems && deliveryItems.length > 0 && (
+            <Box>
+              <Box sx={{ ...styles.container }}>
+                <Typography variant="h3" fontWeight={700} gutterBottom>
+                  {t('delivery')}
+                </Typography>
+                <Box sx={{ ...styles.heading }}>
+                  <Typography variant="h4" fontWeight={700}>
+                    {t('delivery')}
+                  </Typography>
+                  <Typography variant="h4" fontWeight={700} color="primary">
+                    {t('est-delivery')} Tomorrow
+                  </Typography>
+                </Box>
+                <ProductItemList
+                  items={deliveryItems}
                   showAddress={true}
                   storePickupAddresses={storePickupAddress}
                   width="15%"

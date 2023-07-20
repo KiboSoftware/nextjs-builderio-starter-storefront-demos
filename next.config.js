@@ -22,7 +22,8 @@ module.exports = {
       'encrypted-tbn0.gstatic.com',
       'images.ctfassets.net',
       'cdn.builder.io',
-      'totalwine.com'
+      'totalwine.com',
+      'www.totalwine.com',
     ],
     remotePatterns: [
       {
@@ -102,10 +103,20 @@ module.exports = {
         code: 'SP',
         name: 'In Store Pickup',
         label: 'Pickup in Store',
-        details: 'Available at',
+        details: 'Available today at',
         unavailableDetails: 'Unavailable at',
         isRequired: false,
         shortName: 'Pickup',
+      },
+      {
+        value: 'Delivery',
+        code: 'DL',
+        name: 'Delivery',
+        label: 'Delivery',
+        details: 'Available tomorrow from',
+        unavailableDetails: 'Unavailable at',
+        isRequired: false,
+        shortName: 'Delivery',
       },
     ],
     storeLocator: {
