@@ -64,7 +64,7 @@ export async function getServerSideProps(context: any) {
     props: {
       product,
       categoriesTree,
-      section,
+      section: section || {},
       ...(await serverSideTranslations(locale as string, ['common'])),
     },
   }

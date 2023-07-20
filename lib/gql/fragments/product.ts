@@ -3,6 +3,12 @@ fragment productPrices on Product {
       price {
         price
         salePrice
+        discount {
+          discount {
+            name
+            friendlyDescription
+          }
+        }
       }
       priceRange {
         lower { price, salePrice}

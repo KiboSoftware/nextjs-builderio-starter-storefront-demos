@@ -10,6 +10,16 @@ const { serverRuntimeConfig } = getConfig()
 const cacheKey = serverRuntimeConfig.cacheKey
 const cacheTimeOut = serverRuntimeConfig.cacheTimeOut
 
+const removeHiddenCategories = (category: any) => {
+  const { childrenCategories = [] } = category || {}
+  category.childrenCategories = childrenCategories.filter((child: any) => child.isDisplayed)
+  if (category.childrenCategories.length) {
+    for (const child of childrenCategories) {
+      removeHiddenCategories(child)
+    }
+  }
+  return category
+}
 export default async function getCategoryTree(req?: NextApiRequest) {
   try {
     const cachedItems = cache.get(cacheKey)
@@ -19,7 +29,12 @@ export default async function getCategoryTree(req?: NextApiRequest) {
       const headers = req ? getAdditionalHeader(req) : {}
 
       const response = await fetcher({ query: getCategoryTreeQuery, variables: {} }, { headers })
-      const items = response?.data?.categoriesTree?.items
+      let items = response?.data?.categoriesTree?.items || []
+      const filteredCats = removeHiddenCategories({
+        childrenCategories: items,
+        isDisplayed: true,
+      } as any)
+      items = filteredCats.childrenCategories
       if (items.length) {
         cache.set(cacheKey, items, cacheTimeOut)
       }

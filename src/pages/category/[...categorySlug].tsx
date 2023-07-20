@@ -53,37 +53,40 @@ const walk = (category: Maybe<PrCategory>, categoryCodes: any[] = []) => {
   return categoryCodes
 }
 
-export async function getStaticPaths() {
-  const categoriesTree = await getCategoryTree()
-  // const getAllCategoryCodes = (categoryTree: any) => categoryTree.flatMap((c: any) => walk(c))
-  const paths = categoriesTree.map((cat:any) => ({
-      categoryCode: cat.categoryCode,
-      slug: cat.content?.slug as string,
-    })).map((each: any) => {
-    const urlSegment = each.slug
-    const categoryCode = each.categoryCode
-    if (urlSegment) {
-      return `/category/${urlSegment}/${categoryCode}`
-    }
-    return `/category/${categoryCode}`
-  })
-  return { paths, fallback: true }
-}
+// export async function getStaticPaths() {
+//   const categoriesTree = await getCategoryTree()
+//   // const getAllCategoryCodes = (categoryTree: any) => categoryTree.flatMap((c: any) => walk(c))
+//   const paths = categoriesTree
+//     .map((cat: any) => ({
+//       categoryCode: cat.categoryCode,
+//       slug: cat.content?.slug as string,
+//     }))
+//     .map((each: any) => {
+//       const urlSegment = each.slug
+//       const categoryCode = each.categoryCode
+//       if (urlSegment) {
+//         return `/category/${urlSegment}/${categoryCode}`
+//       }
+//       return `/category/${categoryCode}`
+//     })
+//   return { paths, fallback: true }
+// }
 
-export const getStaticProps: any = async (context: any) => {
+export const getServerSideProps: any = async (context: any) => {
   const { locale, params, req } = context
-  const { serverRuntimeConfig } = getConfig()
+  const { serverRuntimeConfig, publicRuntimeConfig } = getConfig()
   const { categorySlug } = params
   if (!categorySlug?.length || categorySlug?.length > 2) {
     return { notFound: true }
   }
   const [_, categoryCode] =
     categorySlug?.length === 2 ? categorySlug : [null, categorySlug?.[0] || null]
+  console.log('categoryCode', params, context.query)
 
   const response = await productSearch(
     {
+      pageSize: parseInt(publicRuntimeConfig.productListing.pageSize),
       ...params,
-      pageSize: parseInt(serverRuntimeConfig.pageSize),
       categoryCode,
     } as unknown as CategorySearchParams,
     req
@@ -103,7 +106,7 @@ export const getStaticProps: any = async (context: any) => {
       metaInformation: categories?.metaInformation,
       ...(await serverSideTranslations(locale as string, ['common'])),
     } as CategoryPageType,
-    revalidate: 60,
+    // revalidate: 60,
   }
 }
 
@@ -136,7 +139,7 @@ const CategoryPage: NextPage<CategoryPageType> = (props) => {
       } as unknown as CategorySearchParams)
     }
   }, [router.query, code])
-
+  console.log('searchParams', searchParams)
   const {
     data: productSearchResult,
     isFetching,

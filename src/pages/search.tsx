@@ -23,13 +23,16 @@ const { publicRuntimeConfig } = getConfig()
 export const getServerSideProps: GetServerSideProps = async (
   context: GetServerSidePropsContext
 ) => {
+  const { serverRuntimeConfig } = getConfig()
+  const { query, locale, res } = context
   const response = await productSearch(
-    context.query as unknown as CategorySearchParams,
+    {
+      pageSize: parseInt(publicRuntimeConfig.productListing.pageSize),
+      ...query,
+    } as unknown as CategorySearchParams,
     context.req as NextApiRequest
   )
-  const { locale, res } = context
-
-  res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=59')
+  // res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=59')
 
   return {
     props: {
@@ -49,7 +52,7 @@ const SearchPage: NextPage<SearchPageType> = (props) => {
   const { data: searchPageResults, isFetching } = useGetSearchedProducts(
     {
       ...searchParams,
-      pageSize: searchParams.pageSize ?? publicRuntimeConfig.productListing.pageSize[0],
+      pageSize: searchParams.pageSize ?? publicRuntimeConfig.productListing.pageSize,
     },
     props.results
   )

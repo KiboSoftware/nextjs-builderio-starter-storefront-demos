@@ -4,7 +4,7 @@ import { NextApiRequest } from 'next'
 
 import { categoryTreeDataMock, productSearchResultMock } from '@/__mocks__/stories'
 import { createQueryClientWrapper } from '@/__test__/utils'
-import CategoryPage, { getStaticProps } from '@/src/pages/category/[...categorySlug]'
+import CategoryPage, { getServerSideProps } from '@/src/pages/category/[...categorySlug]'
 
 import { PrCategory } from '@/lib/gql/types'
 
@@ -124,7 +124,7 @@ describe('[page] Category Page', () => {
       req: {} as NextApiRequest,
       locale: 'mock-locale',
     }
-    const response = await getStaticProps(context)
+    const response = await getServerSideProps(context)
     expect(response).toStrictEqual({
       props: categoryTypeProps,
       revalidate: 60,
@@ -139,7 +139,7 @@ describe('[page] Category Page', () => {
       req: {} as NextApiRequest,
       locale: 'mock-locale',
     }
-    const response = await getStaticProps(context)
+    const response = await getServerSideProps(context)
     expect(response).toStrictEqual({ notFound: true })
   })
 
