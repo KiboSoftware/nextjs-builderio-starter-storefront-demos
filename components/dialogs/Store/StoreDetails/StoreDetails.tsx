@@ -37,7 +37,7 @@ const StoreDetails = (props: StoreDetailsProps) => {
           ? inventory
             ? `${inventory?.stockAvailable} ${t('available')}`
             : t('not-available')
-          : t('available-for-pickup')}
+          : ''}
       </Typography>
 
       <Box

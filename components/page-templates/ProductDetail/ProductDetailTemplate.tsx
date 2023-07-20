@@ -97,15 +97,15 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
   const [isSubscriptionPricingSelected, setIsSubscriptionPricingSelected] = useState<boolean>(false)
 
   const isSubscriptionModeAvailable = subscriptionGetters.isSubscriptionModeAvailable(product)
-  const { data: productPriceResponse } = useGetProductPrice(
-    product?.productCode as string,
-    isSubscriptionPricingSelected
-  )
 
   const { showModal, closeModal } = useModalContext()
   const { addToCart } = useAddCartItem()
   const { data: purchaseLocation } = useGetPurchaseLocation()
-
+  const { data: productPriceResponse } = useGetProductPrice(
+    product?.productCode as string,
+    isSubscriptionPricingSelected,
+    purchaseLocation?.code as string
+  )
   const { addOrRemoveWishlistItem, checkProductInWishlist, isWishlistLoading } = useWishlist()
 
   const {

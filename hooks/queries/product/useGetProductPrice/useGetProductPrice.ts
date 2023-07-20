@@ -16,6 +16,7 @@ export interface useProductPriceResponse {
   isLoading: boolean
   isSuccess: boolean
   isFetching: boolean
+  [key: string]: any
 }
 
 const fetchProductPrice = async (productCode: string, useSubscriptionPricing?: boolean) => {
@@ -45,19 +46,26 @@ const fetchProductPrice = async (productCode: string, useSubscriptionPricing?: b
 
 export const useGetProductPrice = (
   productCode: string,
-  useSubscriptionPricing: boolean
-): useProductPriceResponse => {
-  const {
-    data = [],
-    isLoading,
-    isSuccess,
-    isFetching,
-  } = useQuery({
-    queryKey: productKeys.productParams(productCode, useSubscriptionPricing),
+  useSubscriptionPricing: boolean,
+  purchaseLocation?: string
+): any => {
+  // const {
+  //   data = [],
+  //   isLoading,
+  //   isSuccess,
+  //   isFetching,
+  // }
+  return useQuery({
+    queryKey: [
+      productKeys.productParams(productCode, useSubscriptionPricing),
+      purchaseLocation || '',
+    ],
     queryFn: () => fetchProductPrice(productCode, useSubscriptionPricing),
     enabled: !!productCode,
     refetchOnWindowFocus: true,
   })
+  // foo.re
+  // const { data, isLoading, isSuccess, isFetching } = foo
 
-  return { data, isLoading, isSuccess, isFetching }
+  // return { data, isLoading, isSuccess, isFetching }
 }
