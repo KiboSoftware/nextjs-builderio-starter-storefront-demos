@@ -20,8 +20,9 @@ import {
   FacetList,
   FacetSkeleton,
 } from '@/components/product-listing'
+import AvailabilityFilter from '@/components/product-listing/AvailabilityFilter/AvailabilityFilter'
 import type { CategoryFacetData } from '@/components/product-listing/CategoryFacet/CategoryFacet'
-import { useProductCardActions, useUpdateRoutes } from '@/hooks'
+import { useGetPurchaseLocation, useProductCardActions, useUpdateRoutes } from '@/hooks'
 import { productGetters } from '@/lib/getters'
 import { uiHelpers } from '@/lib/helpers'
 import type {
@@ -188,13 +189,16 @@ const ProductListingTemplate = (props: ProductListingTemplateProps) => {
                 </Stack>
               )}
               {!isLoading && (
-                <FacetList
-                  facetList={facetList}
-                  showSearchAndCount={false}
-                  onFilterByClose={handleFilterBy}
-                  appliedFilters={appliedFilters}
-                  onSelectedTileRemoval={handleSelectedTileRemoval}
-                />
+                <>
+                  <AvailabilityFilter title="Product Availability" />
+                  <FacetList
+                    facetList={facetList}
+                    showSearchAndCount={false}
+                    onFilterByClose={handleFilterBy}
+                    appliedFilters={appliedFilters}
+                    onSelectedTileRemoval={handleSelectedTileRemoval}
+                  />
+                </>
               )}
               <Box pt={4} textAlign={'center'}>
                 <Button variant="contained" color="secondary" onClick={handleClearAllFilters}>
@@ -338,7 +342,21 @@ const ProductListingTemplate = (props: ProductListingTemplateProps) => {
                       {isListView ? (
                         <ProductCardListView {...productCardProps(product)} />
                       ) : (
-                        <ProductCard {...productCardProps(product)} />
+                        <>
+                          <ProductCard {...productCardProps(product)} />
+                          {(product as any)?.price?.discount?.discount?.name && (
+                            <Typography
+                              sx={{
+                                color: 'red.600',
+                                typography: 'body2',
+                                fontWeight: 'bold',
+                                position: 'absolute',
+                              }}
+                            >
+                              {(product as any)?.price?.discount?.discount?.name}
+                            </Typography>
+                          )}
+                        </>
                       )}
                     </Grid>
                   )
