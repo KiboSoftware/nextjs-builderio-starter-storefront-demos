@@ -79,8 +79,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { serverRuntimeConfig } = getConfig()
   const isMultiShipEnabled = serverRuntimeConfig.isMultiShipEnabled
   const { cartTopSection, cartBottomSection } = publicRuntimeConfig?.builderIO?.modelKeys || {}
-  const cartTopContentSection = await builder.get(cartBottomSection).promise()
-  const cartBottomContentSection = await builder.get(cartTopSection).promise()
+  const cartTopContentSection = await builder.get(cartTopSection).promise()
+  const cartBottomContentSection = await builder.get(cartBottomSection).promise()
 
   return {
     props: {

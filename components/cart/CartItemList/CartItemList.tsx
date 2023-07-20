@@ -13,6 +13,7 @@ interface CartItemListProps {
   cartItems: Maybe<CrCartItem>[]
   fulfillmentLocations: Location[]
   purchaseLocation: Location
+  reservations: any
   onCartItemQuantityUpdate: (cartItemId: string, quantity: number) => void
   onCartItemDelete: (cartItemId: string) => void
   onCartItemActionSelection: () => void
@@ -25,6 +26,7 @@ const CartItemList = (props: CartItemListProps) => {
     cartItems,
     fulfillmentLocations = [],
     purchaseLocation,
+    reservations = {},
     onCartItemQuantityUpdate,
     onCartItemDelete,
     onCartItemActionSelection,
@@ -41,12 +43,12 @@ const CartItemList = (props: CartItemListProps) => {
 
   const handleSupportedFulfillmentOptions = (cartItem: CrCartItem): FulfillmentOption[] => {
     const location =
-      cartItem?.fulfillmentLocationCode && cartItem?.fulfillmentMethod === FulfillmentOptions.PICKUP
+      cartItem?.fulfillmentLocationCode && cartItem?.fulfillmentMethod !== FulfillmentOptions.SHIP
         ? cartGetters.getCartItemFulfillmentLocation(cartItem, fulfillmentLocations)
         : purchaseLocation
     return cartGetters.getProductFulfillmentOptions(cartItem, location)
   }
-
+  const getReservationExpiration = (lineId: any) => reservations[lineId] || null
   return (
     <TransitionGroup>
       {cartItems?.map((item: Maybe<CrCartItem>) => (
@@ -62,6 +64,7 @@ const CartItemList = (props: CartItemListProps) => {
             cartItem={item}
             key={item?.id}
             maxQuantity={undefined}
+            reservationExpiration={getReservationExpiration(item?.lineId)}
             onQuantityUpdate={handleQuantityUpdate}
             onCartItemDelete={handleCartItemDelete}
             onCartItemActionSelection={handleCartItemActionSelection}

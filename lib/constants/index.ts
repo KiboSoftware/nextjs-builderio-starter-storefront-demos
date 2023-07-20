@@ -7,6 +7,7 @@ export enum FormStates {
 export enum FulfillmentOptions {
   SHIP = 'Ship',
   PICKUP = 'Pickup',
+  DELIVERY = 'Delivery',
 }
 
 export enum PaymentWorkflow {
@@ -135,7 +136,7 @@ export enum DisplayMode {
 
 export enum DateFormat {
   DATE_FORMAT = 'MMMM dd, yyyy',
-  DATE_FORMAT_WITH_TIME = 'MMMM dd, yyyy, hh:mm a zzz',
+  DATE_FORMAT_WITH_TIME = 'MMMM dd, yyyy, hh:mm a',
 }
 
 export enum ActionName {

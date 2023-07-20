@@ -1,6 +1,7 @@
 export const cartItemDetails = /* GraphQL */ `
   fragment cartItemDetails on CrCartItem {
     id
+    lineId
     fulfillmentMethod
     subscription {
       frequency {
@@ -66,6 +67,7 @@ export const cartDetails = /* GraphQL */ `
       }
       couponCode
     }
+    reservationId
     total
     subtotal
     discountedSubtotal

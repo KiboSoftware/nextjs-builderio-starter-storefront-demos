@@ -6,14 +6,17 @@ import {
   IconButton,
   SxProps,
   Theme,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material'
 import { grey } from '@mui/material/colors'
+import { format } from 'date-fns'
 import { useTranslation } from 'next-i18next'
 
 import { CartItemActions, CartItemActionsMobile } from '@/components/cart'
 import { FulfillmentOptions, Price, ProductItem, QuantitySelector } from '@/components/common'
+import { DateFormat } from '@/lib/constants'
 import { cartGetters, productGetters } from '@/lib/getters'
 import { uiHelpers } from '@/lib/helpers'
 import type { FulfillmentOption } from '@/lib/types'
@@ -25,6 +28,7 @@ interface CartItemProps {
   maxQuantity: number | undefined
   actions?: Array<string>
   fulfillmentOptions: FulfillmentOption[]
+  reservationExpiration?: string
   onQuantityUpdate: (cartItemId: string, quantity: number) => void
   onCartItemDelete: (cartItemId: string) => void
   onCartItemActionSelection: () => void
@@ -88,6 +92,7 @@ const CartItem = (props: CartItemProps) => {
     maxQuantity,
     actions,
     fulfillmentOptions,
+    reservationExpiration,
     onQuantityUpdate,
     onCartItemDelete,
     onCartItemActionSelection,
@@ -195,6 +200,14 @@ const CartItem = (props: CartItemProps) => {
             </IconButton>
           </Box>
         </Box>
+        {reservationExpiration && (
+          <Box sx={{ position: 'relative' }}>
+            <Typography variant="body2" sx={{ color: 'red' }}>
+              Reserved until:{' '}
+              {format(new Date(reservationExpiration), DateFormat.DATE_FORMAT_WITH_TIME)}
+            </Typography>
+          </Box>
+        )}
       </Card>
     </>
   )

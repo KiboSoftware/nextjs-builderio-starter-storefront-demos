@@ -31,6 +31,7 @@ import {
   useDeleteCartCoupon,
   useInitiateCheckout,
 } from '@/hooks'
+import { useReservation } from '@/hooks/queries/reservation/useReservation'
 import { FulfillmentOptions } from '@/lib/constants'
 import { orderGetters, cartGetters } from '@/lib/getters'
 import type { LocationCustom } from '@/lib/types'
@@ -47,6 +48,7 @@ export interface CartTemplateProps {
 const CartTemplate = (props: CartTemplateProps) => {
   const { isMultiShipEnabled } = props
   const { data: cart } = useGetCart(props?.cart)
+  const { data: reservations } = useReservation(cart.id as string)
   const { cartTopContentSection, cartBottomContentSection } = props
   const { t } = useTranslation('common')
   const theme = useTheme()
@@ -202,7 +204,16 @@ const CartTemplate = (props: CartTemplateProps) => {
   const handleContinueShopping = () => {
     router.back()
   }
-
+  const getReservationMap = (resList: any) => {
+    return resList
+      ?.filter((res: any) => res.status === 'Active' && res.reservationType === 'Cart')
+      .reduce((accum: any, res: any) => {
+        res.items.forEach((resItem: any) => {
+          accum[resItem.lineId] = res.expirationDateTime
+        })
+        return accum
+      }, {})
+  }
   return (
     <Grid container>
       {/* Header section */}
@@ -232,6 +243,7 @@ const CartTemplate = (props: CartTemplateProps) => {
           <Grid item xs={12} md={8} sx={{ paddingRight: { md: 2 } }}>
             <CartItemList
               cartItems={cartItems}
+              reservations={getReservationMap(reservations?.items)}
               fulfillmentLocations={
                 locations && Object.keys(locations).length ? (locations as Location[]) : []
               }
