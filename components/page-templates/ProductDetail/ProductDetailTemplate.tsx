@@ -197,13 +197,17 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
   // methods
   const handleAddToCart = async () => {
     try {
+      const purchaseLocationCode =
+        fulfillmentMethod && fulfillmentMethod !== 'Ship'
+          ? (selectedFulfillmentOption?.location?.code as string)
+          : undefined
       const cartResponse = await addToCart.mutateAsync({
         product: {
           productCode,
           variationProductCode,
           fulfillmentMethod,
           options: updatedShopperEnteredValues,
-          purchaseLocationCode: selectedFulfillmentOption?.location?.code as string,
+          purchaseLocationCode,
         },
         quantity,
         ...(purchaseType === PurchaseTypes.SUBSCRIPTION && {
