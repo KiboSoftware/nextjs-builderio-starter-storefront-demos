@@ -8,9 +8,9 @@ export default async function getProduct(productCode: string, req: NextApiReques
   const variables = {
     productCode,
   }
-
+  console.log('has req', !!req)
   const headers = req ? getAdditionalHeader(req) : {}
-
+  console.log('headers', headers)
   const response = await fetcher({ query: getProductQuery, variables }, { headers })
   return response.data?.product
 }

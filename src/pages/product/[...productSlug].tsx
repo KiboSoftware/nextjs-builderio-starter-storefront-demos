@@ -12,7 +12,7 @@ import { productGetters } from '@/lib/getters'
 import { uiHelpers } from '@/lib/helpers'
 
 import { Product } from '@/lib/gql/types'
-import type { NextPage } from 'next'
+import type { GetServerSidePropsContext, NextPage } from 'next'
 
 const { publicRuntimeConfig } = getConfig()
 const apiKey = publicRuntimeConfig?.builderIO?.apiKey
@@ -42,7 +42,8 @@ export async function getServerSideProps(context: any) {
   }
   const [_, productCode] =
     productSlug?.length === 2 ? productSlug : [null, productSlug?.[0] || null]
-
+  console.log('productSlug', productSlug)
+  console.log('get product ssr cookies', req.cookies)
   const product = await getProduct(productCode, req)
   const categoriesTree = await getCategoryTree(req)
 
