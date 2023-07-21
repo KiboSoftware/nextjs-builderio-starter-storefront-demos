@@ -5,12 +5,6 @@ const getAdditionalHeader = (req: NextApiRequest) => {
   const forwardedForHeader = req?.headers['x-forwarded-for']
   if (forwardedForHeader) {
     headers['x-forwarded-for'] = forwardedForHeader.toString().split(',')[0]
-    return {}
-  }
-  if (req.cookies?.['kibo_purchase_location']) {
-    console.log('has location cookie')
-  } else {
-    console.log('no location cookie')
   }
   if (req.cookies?.['kibo_purchase_location']) {
     const location = Buffer.from(req.cookies?.['kibo_purchase_location'], 'base64')
