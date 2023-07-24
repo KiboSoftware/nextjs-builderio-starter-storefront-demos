@@ -23,7 +23,11 @@ const buildMethodFilter = ({ methodbopis, methoddelivery, methodsth }: any) => {
     )
   }
   if (methodsth) {
-    methodFilter.push(`((locationsInStock in [1413] and categoryId eq 3822))`)
+    let categoryId = ''
+    if (methodsth === '804' || methodsth === '906') {
+      categoryId = methodsth === 906 ? '3836' : '3835'
+      methodFilter.push(`(categoryId req ${categoryId})`)
+    }
   }
   return methodFilter.length ? methodFilter.join(' or ') : null
 }
@@ -46,10 +50,11 @@ export const buildProductSearchParams = ({
   if (categoryCode) {
     facetHierValue = `categoryCode:${categoryCode}`
     facet = 'categoryCode'
+    filter = `categoryCode req ${categoryCode}`
   }
   const methodFilter = buildMethodFilter({ methodbopis, methoddelivery, methodsth })
   if (methodFilter) {
-    filter = filter?.length ? `${filter} or ${methodFilter}` : methodFilter
+    filter = filter?.length ? `${filter} and ${methodFilter}` : methodFilter
   }
   const facetValueFilter = getFacetValueFilter(categoryCode, filters)
   return {

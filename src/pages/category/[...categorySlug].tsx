@@ -129,15 +129,10 @@ const CategoryPage: NextPage<CategoryPageType> = (props) => {
   } as unknown as CategorySearchParams)
 
   useEffect(() => {
-    const hasQueryChanged =
-      JSON.stringify(router.query) !== JSON.stringify(previousQueryRef.current)
-    const hasCategoryChanged = code !== searchParams.categoryCode
-    if (hasQueryChanged || hasCategoryChanged) {
-      setSearchParams({
-        categoryCode: code,
-        ...router.query,
-      } as unknown as CategorySearchParams)
-    }
+    setSearchParams({
+      categoryCode: code,
+      ...router.query,
+    } as unknown as CategorySearchParams)
   }, [router.query, code])
   console.log('searchParams', searchParams)
   const {

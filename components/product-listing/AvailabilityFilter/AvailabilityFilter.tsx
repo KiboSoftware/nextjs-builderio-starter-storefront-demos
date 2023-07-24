@@ -106,7 +106,7 @@ const AvailabilityFilter = ({
       filters.methoddelivery = storeLocationGetters.getCode(purchaseLocation)
     }
     if (filterSTH) {
-      filters.methodsth = storeLocationGetters.getZip(purchaseLocation)
+      filters.methodsth = storeLocationGetters.getCode(purchaseLocation)
     }
     return filters
   }
@@ -145,7 +145,7 @@ const AvailabilityFilter = ({
         <>
           <FormControlLabel
             control={<Checkbox size="small" checked={filterBOPIS} onChange={onToggleBOPIS} />}
-            label={`Pickup: ${storeLocationGetters.getName(purchaseLocation)}`}
+            label={`Available for Pickup today`}
             sx={{ ...styles.label }}
           />
           <FormControlLabel
@@ -155,7 +155,7 @@ const AvailabilityFilter = ({
           />
           <FormControlLabel
             control={<Checkbox size="small" checked={filterSTH} onChange={onToggleSTH} />}
-            label={`Ship to: ${storeLocationGetters.getZip(purchaseLocation)}`}
+            label={`Ship to Home: ${storeLocationGetters.getZip(purchaseLocation)}`}
             sx={{ ...styles.label }}
           />
         </>
