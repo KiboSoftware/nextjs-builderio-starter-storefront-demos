@@ -51,7 +51,7 @@ module.exports = {
         name: 'Credit / Debit Card',
       },
     ],
-    countries: ['US', 'AT', 'DE', 'NL'],
+    countries: ['US', 'CA'],
     debounceTimeout: '1000',
     productListing: {
       sortOptions: [
