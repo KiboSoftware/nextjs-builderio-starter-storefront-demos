@@ -35,10 +35,8 @@ const schema = yup.object().shape({
     address2: yup.string().nullable(true).notRequired(),
     cityOrTown: yup.string().required('This field is required'),
     stateOrProvince: yup.string().required('This field is required'),
-    postalOrZipCode: yup
-      .string()
-      .required('This field is required')
-      .matches(/^\d{5}(?:-\d{4})?$/, 'Please provide valid zip code'),
+    postalOrZipCode: yup.string().required('This field is required'),
+    // .matches(/^\d{5}(?:-\d{4})?$/, 'Please provide valid zip code'),
     countryCode: yup.string().required('This field is required'),
   }),
   phoneNumbers: yup.object().shape({
