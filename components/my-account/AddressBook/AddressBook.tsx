@@ -228,9 +228,9 @@ const AddressBook = (props: AddressBookProps) => {
     })
 
     try {
-      await validateCustomerAddress.mutateAsync({
-        addressValidationRequestInput: { address: address?.contact?.address as CuAddress },
-      })
+      // await validateCustomerAddress.mutateAsync({
+      //   addressValidationRequestInput: { address: address?.contact?.address as CuAddress },
+      // })
       if (address?.contact?.id) {
         await updateCustomerAddress.mutateAsync(params as UpdateCustomerAccountContactDetailsParams)
         setIsAddressModified(false)

@@ -533,11 +533,11 @@ const PaymentStep = (props: PaymentStepProps) => {
 
   const handleValidateBillingAddress = async (address: CuAddress) => {
     try {
-      await validateCustomerAddress.mutateAsync({
-        addressValidationRequestInput: {
-          address,
-        },
-      })
+      // await validateCustomerAddress.mutateAsync({
+      //   addressValidationRequestInput: {
+      //     address,
+      //   },
+      // })
       handleTokenization({ ...cardFormDetails })
     } catch (error) {
       setValidateForm(false)

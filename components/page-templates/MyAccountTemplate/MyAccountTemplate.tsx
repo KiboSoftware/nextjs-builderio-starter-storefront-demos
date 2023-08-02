@@ -128,11 +128,11 @@ const MyAccountTemplate = (props: MyAccountTemplateProps) => {
   ) => {
     try {
       let response
-      await validateCustomerAddress.mutateAsync({
-        addressValidationRequestInput: {
-          address: address?.customerContactInput?.address as CuAddress,
-        },
-      })
+      // await validateCustomerAddress.mutateAsync({
+      //   addressValidationRequestInput: {
+      //     address: address?.customerContactInput?.address as CuAddress,
+      //   },
+      // })
       // Add update address
       if (isUpdatingAddress) {
         response = await updateCustomerAddress.mutateAsync(address)
