@@ -24,6 +24,7 @@ module.exports = {
       'cdn.builder.io',
       'totalwine.com',
       'www.totalwine.com',
+      'cdn-sb.euw1.kibocommerce.com',
     ],
     deviceSizes: [
       100, 240, 340, 380, 400, 450, 500, 550, 600, 640, 750, 828, 1080, 1200, 1920, 2048, 3840,

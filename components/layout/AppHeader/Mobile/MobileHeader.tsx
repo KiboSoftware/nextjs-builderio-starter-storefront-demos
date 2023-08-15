@@ -10,7 +10,7 @@ import { useHeaderContext } from '@/context'
 
 const MobileHeaderStyles = {
   container: {
-    backgroundColor: 'common.black',
+    backgroundColor: '#00573f',
     height: '55px',
     display: 'flex',
     justifyContent: 'space-between',
