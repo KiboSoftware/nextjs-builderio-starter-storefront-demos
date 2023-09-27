@@ -49,6 +49,7 @@ const fetchProductSearch = async (searchParams: CategorySearchParams) => {
 
 export const useGetProducts = (productCodes: Array<string>): UseProductsResponse => {
   const productCodeFilter: Array<string> = []
+  productCodes = typeof productCodes === 'string' ? [productCodes] : productCodes
   productCodes?.forEach((code) => {
     productCodeFilter.push(`productCode eq ${code}`)
   })
