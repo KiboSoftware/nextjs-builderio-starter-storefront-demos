@@ -298,231 +298,231 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
   const handleFrequencyChange = async (_name: string, value: string) => setSelectedFrequency(value)
 
   return (
-    <Grid container>
-      {!isQuickViewModal && (
-        <Grid item xs={12} alignItems="center" sx={{ paddingBlock: 4 }}>
-          <KiboBreadcrumbs breadcrumbs={breadcrumbs} />
+    <>
+      <Grid container>
+        {!isQuickViewModal && (
+          <Grid item xs={12} alignItems="center" sx={{ paddingBlock: 4 }}>
+            <KiboBreadcrumbs breadcrumbs={breadcrumbs} />
+          </Grid>
+        )}
+        <Grid item xs={12} md={6} sx={{ pb: { xs: 3, md: 0 } }}>
+          <ImageGallery images={productGallery as ProductImage[]} title={''} />
         </Grid>
-      )}
-      <Grid item xs={12} md={6} sx={{ pb: { xs: 3, md: 0 } }}>
-        <ImageGallery images={productGallery as ProductImage[]} title={''} />
-      </Grid>
-      <Grid item xs={12} md={6} sx={{ width: '100%', pl: { xs: 0, md: 5 } }}>
-        <Typography variant="h1" gutterBottom>
-          {productName}
-        </Typography>
-        <Price
-          price={t<string>('currency', { val: productPrice.regular })}
-          {...(productPrice.special && {
-            salePrice: t<string>('currency', { val: productPrice.special }),
-          })}
-          priceRange={usePriceRangeFormatter(productPriceRange)}
-        />
-        <Box paddingY={1} display={shortDescription ? 'block' : 'none'}>
-          <Box
-            data-testid="short-description"
-            dangerouslySetInnerHTML={{
-              __html: shortDescription,
-            }}
+        <Grid item xs={12} md={6} sx={{ width: '100%', pl: { xs: 0, md: 5 } }}>
+          <Typography variant="h1" gutterBottom>
+            {productName}
+          </Typography>
+          <Price
+            price={t<string>('currency', { val: productPrice.regular })}
+            {...(productPrice.special && {
+              salePrice: t<string>('currency', { val: productPrice.special }),
+            })}
+            priceRange={usePriceRangeFormatter(productPriceRange)}
           />
-          {isQuickViewModal && (
-            <StyledLink
-              href={getProductLink(product?.productCode as string)}
-              passHref
-              onClick={() => closeModal()}
-              aria-label={t('more-details')}
-            >
-              {t('more-details')}
-            </StyledLink>
-          )}
-        </Box>
+          <Box paddingY={1} display={shortDescription ? 'block' : 'none'}>
+            <Box
+              data-testid="short-description"
+              dangerouslySetInnerHTML={{
+                __html: shortDescription,
+              }}
+            />
+            {isQuickViewModal && (
+              <StyledLink
+                href={getProductLink(product?.productCode as string)}
+                passHref
+                onClick={() => closeModal()}
+                aria-label={t('more-details')}
+              >
+                {t('more-details')}
+              </StyledLink>
+            )}
+          </Box>
 
-        <Box data-testid="product-rating">
-          <Rating
-            name="read-only"
-            value={productRating}
-            precision={0.5}
-            readOnly
-            size="small"
-            icon={<StarRounded color="primary" />}
-            emptyIcon={<StarRounded />}
-          />
-        </Box>
-
-        <Box paddingX={1} paddingY={3} display={optionsVisibility.color ? 'block' : 'none'}>
-          <ColorSelector
-            attributeFQN={productOptions?.colourOptions?.attributeFQN as string}
-            values={productOptions?.colourOptions?.values as ProductOptionValue[]}
-            onColorChange={selectProductOption}
-          />
-        </Box>
-
-        <Box paddingY={1} display={optionsVisibility.size ? 'block' : 'none'}>
-          <ProductVariantSizeSelector
-            values={productOptions?.sizeOptions?.values as ProductOptionValue[]}
-            attributeFQN={productOptions?.sizeOptions?.attributeFQN as string}
-            onSizeChange={selectProductOption}
-          />
-        </Box>
-
-        <Box paddingY={1} display={optionsVisibility.select ? 'block' : 'none'}>
-          {productOptions?.selectOptions?.map((option) => {
-            return (
-              <Box key={option?.attributeDetail?.name} paddingY={1}>
-                <ProductOptionSelect
-                  name={option?.attributeDetail?.name}
-                  optionValues={option?.values as ProductOptionValue[]}
-                  value={productGetters.getOptionSelectedValue(option as ProductOption)}
-                  label={productGetters.getOptionName(option as ProductOption)}
-                  attributeFQN={option?.attributeFQN as string}
-                  onDropdownChange={selectProductOption}
-                />
-              </Box>
-            )
-          })}
-        </Box>
-
-        <Box paddingY={1} display={optionsVisibility.checkbox ? 'block' : 'none'}>
-          {productOptions?.yesNoOptions.map((option: ProductOption | null) => {
-            const attributeDetail = option?.attributeDetail as AttributeDetail
-            return (
-              <ProductOptionCheckbox
-                key={attributeDetail.name}
-                label={attributeDetail.name as string}
-                attributeFQN={option?.attributeFQN as string}
-                checked={
-                  productGetters.getOptionSelectedValue(option as ProductOption) ? true : false
-                }
-                onCheckboxChange={selectProductOption}
-              />
-            )
-          })}
-        </Box>
-
-        <Box paddingY={1} display={optionsVisibility.textbox ? 'block' : 'none'}>
-          {productOptions?.textBoxOptions.map((option) => {
-            return (
-              <ProductOptionTextBox
-                key={option?.attributeDetail?.name}
-                option={option as ProductOption}
-                onBlur={selectProductOption}
-              />
-            )
-          })}
-        </Box>
-
-        <Box paddingY={1}>
-          <QuantitySelector
-            label="Qty"
-            quantity={quantity}
-            onIncrease={() => setQuantity((prevQuantity: number) => Number(prevQuantity) + 1)}
-            onDecrease={() => setQuantity((prevQuantity: number) => Number(prevQuantity) - 1)}
-          />
-        </Box>
-        {isSubscriptionModeAvailable && (
-          <Box paddingY={1}>
-            <KiboRadio
-              radioOptions={purchaseTypeRadioOptions}
-              selected={purchaseType}
-              onChange={handlePurchaseTypeSelection}
+          <Box data-testid="product-rating">
+            <Rating
+              name="read-only"
+              value={productRating}
+              precision={0.5}
+              readOnly
+              size="small"
+              icon={<StarRounded color="primary" />}
+              emptyIcon={<StarRounded />}
             />
           </Box>
-        )}
-        <Box paddingY={1}>
-          {purchaseType === PurchaseTypes.SUBSCRIPTION && (
-            <KiboSelect
-              name={t('subscription-frequency')}
-              onChange={handleFrequencyChange}
-              placeholder={t('select-subscription-frequency')}
-              value={selectedFrequency}
-              label={t('subscription-frequency')}
-            >
-              {subscriptionFrequency?.map((property) => {
-                return (
-                  <MenuItem key={property?.stringValue} value={`${property?.stringValue}`}>
-                    {`${property?.stringValue}`}
-                  </MenuItem>
-                )
-              })}
-            </KiboSelect>
-          )}
-          {purchaseType === PurchaseTypes.ONETIMEPURCHASE && (
-            <FulfillmentOptions
-              fulfillmentOptions={fulfillmentOptions}
-              selected={selectedFulfillmentOption?.method}
-              onFulfillmentOptionChange={(value: string) => handleFulfillmentOptionChange(value)}
-              onStoreSetOrUpdate={() => handleProductPickupLocation()}
-            />
-          )}
-        </Box>
 
-        <Box pt={2} display="flex" sx={{ justifyContent: 'space-between' }}>
-          <Typography fontWeight="600" variant="body2">
-            {selectedFulfillmentOption?.method && `${quantityLeft} ${t('item-left')}`}
-          </Typography>
-          <MuiLink
-            color="inherit"
-            variant="body2"
-            sx={{ cursor: 'pointer' }}
-            onClick={() => handleProductPickupLocation(t('check-nearby-store'))}
-          >
-            {t('nearby-stores')}
-          </MuiLink>
-        </Box>
-        <Box paddingY={1} display="flex" flexDirection={'column'} gap={2}>
-          <LoadingButton
-            variant="contained"
-            color="primary"
-            fullWidth
-            onClick={() => handleAddToCart()}
-            loading={addToCart.isPending}
-            {...(!isValidForAddToCart() && { disabled: true })}
-          >
-            {t('add-to-cart')}
-          </LoadingButton>
-          <Box display="flex" gap={3}>
+          <Box paddingX={1} paddingY={3} display={optionsVisibility.color ? 'block' : 'none'}>
+            <ColorSelector
+              attributeFQN={productOptions?.colourOptions?.attributeFQN as string}
+              values={productOptions?.colourOptions?.values as ProductOptionValue[]}
+              onColorChange={selectProductOption}
+            />
+          </Box>
+
+          <Box paddingY={1} display={optionsVisibility.size ? 'block' : 'none'}>
+            <ProductVariantSizeSelector
+              values={productOptions?.sizeOptions?.values as ProductOptionValue[]}
+              attributeFQN={productOptions?.sizeOptions?.attributeFQN as string}
+              onSizeChange={selectProductOption}
+            />
+          </Box>
+
+          <Box paddingY={1} display={optionsVisibility.select ? 'block' : 'none'}>
+            {productOptions?.selectOptions?.map((option) => {
+              return (
+                <Box key={option?.attributeDetail?.name} paddingY={1}>
+                  <ProductOptionSelect
+                    name={option?.attributeDetail?.name}
+                    optionValues={option?.values as ProductOptionValue[]}
+                    value={productGetters.getOptionSelectedValue(option as ProductOption)}
+                    label={productGetters.getOptionName(option as ProductOption)}
+                    attributeFQN={option?.attributeFQN as string}
+                    onDropdownChange={selectProductOption}
+                  />
+                </Box>
+              )
+            })}
+          </Box>
+
+          <Box paddingY={1} display={optionsVisibility.checkbox ? 'block' : 'none'}>
+            {productOptions?.yesNoOptions.map((option: ProductOption | null) => {
+              const attributeDetail = option?.attributeDetail as AttributeDetail
+              return (
+                <ProductOptionCheckbox
+                  key={attributeDetail.name}
+                  label={attributeDetail.name as string}
+                  attributeFQN={option?.attributeFQN as string}
+                  checked={
+                    productGetters.getOptionSelectedValue(option as ProductOption) ? true : false
+                  }
+                  onCheckboxChange={selectProductOption}
+                />
+              )
+            })}
+          </Box>
+
+          <Box paddingY={1} display={optionsVisibility.textbox ? 'block' : 'none'}>
+            {productOptions?.textBoxOptions.map((option) => {
+              return (
+                <ProductOptionTextBox
+                  key={option?.attributeDetail?.name}
+                  option={option as ProductOption}
+                  onBlur={selectProductOption}
+                />
+              )
+            })}
+          </Box>
+
+          <Box paddingY={1}>
+            <QuantitySelector
+              label="Qty"
+              quantity={quantity}
+              onIncrease={() => setQuantity((prevQuantity: number) => Number(prevQuantity) + 1)}
+              onDecrease={() => setQuantity((prevQuantity: number) => Number(prevQuantity) - 1)}
+            />
+          </Box>
+          {isSubscriptionModeAvailable && (
+            <Box paddingY={1}>
+              <KiboRadio
+                radioOptions={purchaseTypeRadioOptions}
+                selected={purchaseType}
+                onChange={handlePurchaseTypeSelection}
+              />
+            </Box>
+          )}
+          <Box paddingY={1}>
+            {purchaseType === PurchaseTypes.SUBSCRIPTION && (
+              <KiboSelect
+                name={t('subscription-frequency')}
+                onChange={handleFrequencyChange}
+                placeholder={t('select-subscription-frequency')}
+                value={selectedFrequency}
+                label={t('subscription-frequency')}
+              >
+                {subscriptionFrequency?.map((property) => {
+                  return (
+                    <MenuItem key={property?.stringValue} value={`${property?.stringValue}`}>
+                      {`${property?.stringValue}`}
+                    </MenuItem>
+                  )
+                })}
+              </KiboSelect>
+            )}
+            {purchaseType === PurchaseTypes.ONETIMEPURCHASE && (
+              <FulfillmentOptions
+                fulfillmentOptions={fulfillmentOptions}
+                selected={selectedFulfillmentOption?.method}
+                onFulfillmentOptionChange={(value: string) => handleFulfillmentOptionChange(value)}
+                onStoreSetOrUpdate={() => handleProductPickupLocation()}
+              />
+            )}
+          </Box>
+
+          <Box pt={2} display="flex" sx={{ justifyContent: 'space-between' }}>
+            <Typography fontWeight="600" variant="body2">
+              {selectedFulfillmentOption?.method && `${quantityLeft} ${t('item-left')}`}
+            </Typography>
+            <MuiLink
+              color="inherit"
+              variant="body2"
+              sx={{ cursor: 'pointer' }}
+              onClick={() => handleProductPickupLocation(t('check-nearby-store'))}
+            >
+              {t('nearby-stores')}
+            </MuiLink>
+          </Box>
+          <Box paddingY={1} display="flex" flexDirection={'column'} gap={2}>
             <LoadingButton
               variant="contained"
-              color="secondary"
+              color="primary"
               fullWidth
-              onClick={handleWishList}
-              loading={isWishlistLoading}
-              sx={{ padding: '0.375rem 0.5rem' }}
-              {...(!wishlistGetters.isAvailableToAddToWishlist(currentProduct) && {
-                disabled: true,
-              })}
+              onClick={() => handleAddToCart()}
+              loading={addToCart.isPending}
+              {...(!isValidForAddToCart() && { disabled: true })}
             >
-              {isProductInWishlist ? (
-                <FavoriteRoundedIcon sx={{ color: 'red.900', marginRight: '14px' }} />
-              ) : (
-                <FavoriteBorderRoundedIcon sx={{ color: 'grey.600', marginRight: '14px' }} />
-              )}
-              {t('add-to-wishlist')}
+              {t('add-to-cart')}
             </LoadingButton>
-            <Button variant="contained" color="inherit" fullWidth>
-              {t('one-click-checkout')}
-            </Button>
+            <Box display="flex" gap={3}>
+              <LoadingButton
+                variant="contained"
+                color="secondary"
+                fullWidth
+                onClick={handleWishList}
+                loading={isWishlistLoading}
+                sx={{ padding: '0.375rem 0.5rem' }}
+                {...(!wishlistGetters.isAvailableToAddToWishlist(currentProduct) && {
+                  disabled: true,
+                })}
+              >
+                {isProductInWishlist ? (
+                  <FavoriteRoundedIcon sx={{ color: 'red.900', marginRight: '14px' }} />
+                ) : (
+                  <FavoriteBorderRoundedIcon sx={{ color: 'grey.600', marginRight: '14px' }} />
+                )}
+                {t('add-to-wishlist')}
+              </LoadingButton>
+              <Button variant="contained" color="inherit" fullWidth>
+                {t('one-click-checkout')}
+              </Button>
+            </Box>
           </Box>
-        </Box>
+        </Grid>
+        {!isQuickViewModal && (
+          <>
+            <Grid item xs={12} paddingY={3}>
+              <Divider />
+            </Grid>
+            <Grid item xs={12}>
+              {properties?.length > 0 && (
+                <Box paddingY={3}>
+                  <ProductInformation productFullDescription={description} options={properties} />
+                </Box>
+              )}
+            </Grid>
+          </>
+        )}
       </Grid>
-      {!isQuickViewModal && (
-        <>
-          <Grid item xs={12} paddingY={3}>
-            <Divider />
-          </Grid>
-          <Grid item xs={12}>
-            {properties?.length > 0 && (
-              <Box paddingY={3}>
-                <ProductInformation productFullDescription={description} options={properties} />
-              </Box>
-            )}
-          </Grid>
-          {children}
-        </>
-      )}
-
-      {children && children}
-    </Grid>
+      {!isQuickViewModal && children}
+    </>
   )
 }
 

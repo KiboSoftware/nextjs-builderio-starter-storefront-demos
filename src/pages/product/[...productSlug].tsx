@@ -28,7 +28,7 @@ Builder.registerComponent(ProductRecommendations, {
     },
     {
       name: 'productCodes',
-      type: 'KiboCommerceProduct',
+      type: 'KiboCommerceProductsList',
     },
   ],
 })
@@ -48,10 +48,9 @@ export async function getServerSideProps(context: any) {
 
   const redirectPath = routeHandle(resolvedUrl, params.productSlug, product)
   const shouldRedirect = resolvedUrl !== redirectPath ? true : false
-  const { productDetailSection } =
-    publicRuntimeConfig?.builderIO?.modelKeys?.productDetailSection || {}
+  const productDetailSection = publicRuntimeConfig?.builderIO?.modelKeys?.productDetailSection || ''
   const section = await builder
-    .get(productDetailSection, { userAttributes: { slug: productCode } })
+    .get(productDetailSection, { userAttributes: { slug: `product-${productCode}` } })
     .promise()
 
   return {
@@ -64,7 +63,7 @@ export async function getServerSideProps(context: any) {
     props: {
       product,
       categoriesTree,
-      section,
+      section: section || null,
       ...(await serverSideTranslations(locale as string, ['common'])),
     },
   }
@@ -121,8 +120,7 @@ const ProductDetailPage: NextPage = (props: any) => {
   // if (typeof window !== 'undefined') {
   //   routeHandle(router, product)
   // }
-  const { productDetailSection } =
-    publicRuntimeConfig?.builderIO?.modelKeys?.productDetailSection || {}
+  const productDetailSection = publicRuntimeConfig?.builderIO?.modelKeys?.productDetailSection || ''
   const breadcrumbs = product ? productGetters.getBreadcrumbs(product) : []
   return (
     <>

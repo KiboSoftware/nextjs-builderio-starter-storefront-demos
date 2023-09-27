@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { BuilderComponent, builder, Builder } from '@builder.io/react'
 import getConfig from 'next/config'
 import ErrorPage from 'next/error'
 import Head from 'next/head'
@@ -35,6 +36,7 @@ interface CategoryPageType {
     canonical: string
   }
   category: { categories: PrCategory[] }
+  section: any
 }
 
 const walk = (category: Maybe<PrCategory>, categoryCodes: any[] = []) => {
@@ -52,6 +54,10 @@ const walk = (category: Maybe<PrCategory>, categoryCodes: any[] = []) => {
   }
   return categoryCodes
 }
+const { publicRuntimeConfig } = getConfig()
+const apiKey = publicRuntimeConfig?.builderIO?.apiKey
+
+builder.init(apiKey)
 
 export async function getStaticPaths() {
   const categoriesTree = await getCategoryTree()
@@ -70,7 +76,7 @@ export async function getStaticPaths() {
 
 export const getStaticProps: any = async (context: any) => {
   const { locale, params, req } = context
-  const { serverRuntimeConfig } = getConfig()
+  const { serverRuntimeConfig, publicRuntimeConfig } = getConfig()
   const { categorySlug } = params
   if (!categorySlug?.length || categorySlug?.length > 2) {
     return { notFound: true }
@@ -90,6 +96,10 @@ export const getStaticProps: any = async (context: any) => {
   const categoriesTree = await getCategoryTree(req)
 
   const categories = await categoryTreeSearchByCode({ categoryCode }, categoriesTree)
+  const categoryTopSection = publicRuntimeConfig?.builderIO?.modelKeys?.categoryTopSection || ''
+  const builderSection = await builder
+    .get(categoryTopSection, { userAttributes: { slug: `category-${categoryCode}` } })
+    .promise()
 
   return {
     props: {
@@ -99,6 +109,7 @@ export const getStaticProps: any = async (context: any) => {
       categoryCode,
       seoFriendlyUrl: categories?.seoFriendlyUrl,
       metaInformation: categories?.metaInformation,
+      section: builderSection || null,
       ...(await serverSideTranslations(locale as string, ['common'])),
     } as CategoryPageType,
     revalidate: 60,
@@ -247,7 +258,12 @@ const CategoryPage: NextPage<CategoryPageType> = (props) => {
         onSortItemSelection={changeSorting}
         // onPaginationChange={changePagination}
         onInfiniteScroll={handleInfiniteScroll}
-      />
+      >
+        <BuilderComponent
+          model={publicRuntimeConfig?.builderIO?.modelKeys?.categoryTopSection}
+          content={props.section}
+        />
+      </ProductListingTemplate>
     </>
   )
 }
