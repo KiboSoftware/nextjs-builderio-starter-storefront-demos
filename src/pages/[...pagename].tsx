@@ -43,35 +43,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 }
 
-const PageNotFound = () => {
-  return (
-    <div
-      style={{
-        height: '300px',
-        color: 'red',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <h1>Page not found (404)</h1>
-    </div>
-  )
-}
-
 const Page = (props: any) => {
   const { page } = props
-
   return (
     <div>
-      {page ? (
-        <BuilderComponent
-          model={publicRuntimeConfig?.builderIO?.modelKeys?.defaultPage}
-          content={page}
-        />
-      ) : (
-        <PageNotFound />
-      )}
+      <BuilderComponent
+        model={publicRuntimeConfig?.builderIO?.modelKeys?.defaultPage}
+        content={page}
+      />
     </div>
   )
 }

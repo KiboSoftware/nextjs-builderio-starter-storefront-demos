@@ -625,7 +625,7 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
         </>
       )}
 
-      {children && children}
+      {!isQuickViewModal && children}
     </Grid>
   )
 }

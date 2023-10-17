@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, PropsWithChildren } from 'react'
 
+import { BuilderComponent, builder, Builder } from '@builder.io/react'
 import getConfig from 'next/config'
 import ErrorPage from 'next/error'
 import { useRouter } from 'next/router'
@@ -32,8 +33,15 @@ interface CategoryPageType extends PageWithMetaData {
   categoriesTree?: PrCategory[]
   seoFriendlyUrl?: string
   categoryCode?: string
+  section?: any
   category: { categories: PrCategory[] }
 }
+
+const { publicRuntimeConfig } = getConfig()
+const apiKey = publicRuntimeConfig?.builderIO?.apiKey
+
+builder.init(apiKey)
+
 function getMetaData(category: PrCategory): MetaData {
   return {
     title: category?.content?.metaTagTitle || null,
@@ -43,6 +51,7 @@ function getMetaData(category: PrCategory): MetaData {
     robots: null,
   }
 }
+
 export async function getStaticPaths(): Promise<GetStaticPathsResult> {
   const categoriesTree = (await getCategoryTree()) || []
   const getCategoryPaths = (category: Maybe<PrCategory>, categoryPaths: any[] = []) => {
@@ -84,6 +93,12 @@ export async function getStaticProps(
     categoryCode,
     ...params,
   } as unknown as CategorySearchParams)
+
+  const categoryTopSection = publicRuntimeConfig?.builderIO?.modelKeys?.categoryTopSection || ''
+  const builderSection = await builder
+    .get(categoryTopSection, { userAttributes: { slug: `category-${categoryCode}` } })
+    .promise()
+
   return {
     props: {
       results: response?.data?.products || [],
@@ -91,6 +106,7 @@ export async function getStaticProps(
       category: { categories: [category] },
       categoryCode,
       metaData: getMetaData(category),
+      section: builderSection || null,
       ...(await serverSideTranslations(locale as string, ['common'])),
     } as CategoryPageType,
     revalidate: 60,
@@ -215,7 +231,12 @@ const CategoryPage: NextPage<CategoryPageType> = (props) => {
         onSortItemSelection={changeSorting}
         // onPaginationChange={changePagination}
         onInfiniteScroll={handleInfiniteScroll}
-      />
+      >
+        <BuilderComponent
+          model={publicRuntimeConfig?.builderIO?.modelKeys?.categoryTopSection}
+          content={props.section}
+        />
+      </ProductListingTemplate>
     </>
   )
 }

@@ -1,9 +1,11 @@
+import { BuilderComponent, builder, Builder } from '@builder.io/react'
 import getConfig from 'next/config'
 import { useRouter } from 'next/router'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 
 import { ProductDetailTemplate, ProductDetailSkeleton } from '@/components/page-templates'
 import { useGetProduct } from '@/hooks'
+import { ProductRecommendations } from '@/components/product'
 import { getProduct, getCategoryTree, productSearch } from '@/lib/api/operations'
 import { productGetters } from '@/lib/getters'
 import { buildProductPath } from '@/lib/helpers'
@@ -24,7 +26,27 @@ interface ProductPageType extends PageWithMetaData {
   product?: Product
   productWithPreview?: Product
   isPreview?: boolean
+  section?: any
 }
+
+const { publicRuntimeConfig } = getConfig()
+const apiKey = publicRuntimeConfig?.builderIO?.apiKey
+
+builder.init(apiKey)
+
+Builder.registerComponent(ProductRecommendations, {
+  name: 'ProductRecommendations',
+  inputs: [
+    {
+      name: 'title',
+      type: 'string',
+    },
+    {
+      name: 'productCodes',
+      type: 'KiboCommerceProductsList',
+    },
+  ],
+})
 function getMetaData(product: Product): MetaData {
   return {
     title: product?.content?.metaTagTitle || null,
@@ -46,14 +68,16 @@ export async function getStaticProps(
   if (!product) {
     return { notFound: true }
   }
-  // const section = await builder
-  //   .get('kibosection', { userAttributes: { slug: productCode } })
-  //   .promise()
+  const pdpBuilderSectionKey = publicRuntimeConfig?.builderIO?.modelKeys?.productDetailSection || ''
+  const section = await builder
+    .get(pdpBuilderSectionKey, { userAttributes: { slug: `product-${productCode}` } })
+    .promise()
 
   return {
     props: {
       product,
       categoriesTree,
+      section: section || null,
       metaData: getMetaData(product),
       ...(await serverSideTranslations(locale as string, ['common'])),
     },
@@ -85,6 +109,7 @@ const ProductDetailPage: NextPage<ProductPageType> = (props) => {
     return <ProductDetailSkeleton />
   }
 
+  const pdpBuilderSectionKey = publicRuntimeConfig?.builderIO?.modelKeys?.productDetailSection || ''
   const breadcrumbs = product ? productGetters.getBreadcrumbs(product) : []
 
   return (
@@ -93,7 +118,9 @@ const ProductDetailPage: NextPage<ProductPageType> = (props) => {
         key={productResponse?.productCode}
         product={{ ...product, ...productResponse }}
         breadcrumbs={breadcrumbs}
-      />
+      >
+        <BuilderComponent model={pdpBuilderSectionKey} content={props.section} />
+      </ProductDetailTemplate>
     </>
   )
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, PropsWithChildren } from 'react'
 
 import Add from '@mui/icons-material/Add'
 import Apps from '@mui/icons-material/Apps'
@@ -39,7 +39,7 @@ interface SortingValues {
   selected: boolean
 }
 
-export interface ProductListingTemplateProps {
+export interface ProductListingTemplateProps extends PropsWithChildren<any> {
   breadCrumbsList: BreadCrumbType[]
   productListingHeader?: string
   facetList?: FacetType[]
@@ -173,7 +173,7 @@ const ProductListingTemplate = (props: ProductListingTemplateProps) => {
           <FullWidthDivider />
         </>
       ) : null}
-
+      {props.children}
       {!showFilterBy && (
         <Box>
           <Box sx={{ ...PLPStyles.mainSection }}>
