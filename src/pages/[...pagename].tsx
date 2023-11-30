@@ -64,13 +64,11 @@ const Page = (props: any) => {
 
   return (
     <div>
-      {page ? (
+      {(
         <BuilderComponent
           model={publicRuntimeConfig?.builderIO?.modelKeys?.defaultPage}
           content={page}
         />
-      ) : (
-        <PageNotFound />
       )}
     </div>
   )
