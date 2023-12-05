@@ -55,7 +55,7 @@ const HeaderAction = (props: HeaderActionProps) => {
         <Icon
           fontSize={iconFontSize}
           sx={(theme: Theme) => ({
-            color: 'grey.900',
+            color: theme.palette.primary.main,
             [theme.breakpoints.down('md')]: {
               color: mobileIconColor,
             },

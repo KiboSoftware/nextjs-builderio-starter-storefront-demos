@@ -64,12 +64,10 @@ const Page = (props: any) => {
 
   return (
     <div>
-      {(
-        <BuilderComponent
-          model={publicRuntimeConfig?.builderIO?.modelKeys?.defaultPage}
-          content={page}
-        />
-      )}
+      <BuilderComponent
+        model={publicRuntimeConfig?.builderIO?.modelKeys?.defaultPage}
+        content={page}
+      />
     </div>
   )
 }

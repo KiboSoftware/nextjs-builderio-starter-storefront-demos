@@ -166,7 +166,7 @@ const CartItem = (props: CartItemProps) => {
               flexItem
             />
 
-            <Box sx={{ ...styles.subContainer }}>
+            {/* <Box sx={{ ...styles.subContainer }}>
               <FulfillmentOptions
                 fulfillmentOptions={fulfillmentOptions}
                 selected={cartItem?.fulfillmentMethod || ''}
@@ -175,7 +175,7 @@ const CartItem = (props: CartItemProps) => {
                 }
                 onStoreSetOrUpdate={() => handleProductPickupLocation(cartItem?.id as string)} // change store: Open storelocator modal. Should not change global store.
               />
-            </Box>
+            </Box> */}
           </Box>
 
           <Box sx={{ ...styles.icon }}>

@@ -47,7 +47,7 @@ const fetchProductSearch = async (searchParams: CategorySearchParams) => {
  * @returns 'response?.products', which contains list of products based on search request.
  */
 
-export const useGetProducts = (productCodes: Array<string>): UseProductsResponse => {
+export const useGetProducts = (productCodes: Array<string> | string): UseProductsResponse => {
   const productCodeFilter: Array<string> = []
   productCodes = typeof productCodes === 'string' ? [productCodes] : productCodes
   productCodes?.forEach((code) => {

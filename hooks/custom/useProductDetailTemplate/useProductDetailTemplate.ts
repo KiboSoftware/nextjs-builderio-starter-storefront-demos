@@ -8,6 +8,7 @@ import { productGetters } from '@/lib/getters'
 import type { LocationCustom, ProductCustom } from '@/lib/types'
 
 import type { ConfiguredProduct, Location, ProductOptionSelectionInput } from '@/lib/gql/types'
+import { FulfillmentOptions } from '@/lib/constants'
 
 interface UseProductDetailTemplateProps {
   product: ProductCustom
@@ -38,27 +39,31 @@ export const useProductDetailTemplate = (props: UseProductDetailTemplateProps) =
     ProductOptionSelectionInput[]
   >([])
   const [quantity, setQuantity] = useState<number>(1)
-  const [selectedFulfillmentOption, setSelectedFulfillmentOption] = useState<
-    SelectedFulfillmentOption<Location>
-  >({
-    method: '',
-    location: {},
-  })
-
+  // const [selectedFulfillmentOption, setSelectedFulfillmentOption] = useState<
+  //   SelectedFulfillmentOption<Location>
+  // >({
+  //   method: FulfillmentOptions.SHIP,
+  //   location: {},
+  // })
+  const selectedFulfillmentOption = {
+    method: FulfillmentOptions.SHIP,
+    location: { code: '', name: '' },
+  }
+  const setSelectedFulfillmentOption = () => {}
   useEffect(() => {
     setCurrentProduct(product)
   }, [product?.productCode])
 
-  useEffect(() => {
-    if (purchaseLocation?.name || selectedFulfillmentOption?.location?.name) {
-      setSelectedFulfillmentOption({
-        method: selectedFulfillmentOption?.method || '',
-        location: selectedFulfillmentOption.location?.code
-          ? selectedFulfillmentOption?.location
-          : purchaseLocation,
-      })
-    }
-  }, [purchaseLocation?.name, selectedFulfillmentOption?.location?.name])
+  // useEffect(() => {
+  //   if (purchaseLocation?.name || selectedFulfillmentOption?.location?.name) {
+  //     setSelectedFulfillmentOption({
+  //       method: selectedFulfillmentOption?.method || '',
+  //       location: selectedFulfillmentOption.location?.code
+  //         ? selectedFulfillmentOption?.location
+  //         : purchaseLocation,
+  //     })
+  //   }
+  // }, [purchaseLocation?.name, selectedFulfillmentOption?.location?.name])
 
   const productCode = productGetters.getProductId(currentProduct)
 

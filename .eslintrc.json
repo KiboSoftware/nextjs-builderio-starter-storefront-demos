@@ -16,7 +16,7 @@
     "@emotion/styled-import": "error",
     "jsx-a11y/aria-props": "error",
     "import/order": [
-      "error",
+      "warn",
       {
         "groups": [
           ["builtin", "external"],

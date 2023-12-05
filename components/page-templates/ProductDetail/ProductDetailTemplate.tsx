@@ -60,6 +60,7 @@ import type {
   CrProduct,
   ProductPrice,
 } from '@/lib/gql/types'
+import { BuilderComponent } from '@builder.io/react'
 
 interface ProductDetailTemplateProps {
   product: ProductCustom
@@ -87,9 +88,9 @@ const StyledLink = styled(Link)(({ theme }: { theme: Theme }) => ({
   fontSize: theme?.typography.body2.fontSize,
 }))
 
-const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
+const ProductDetailTemplate = (props: any) => {
   const { getProductLink } = uiHelpers()
-  const { product, breadcrumbs = [], isQuickViewModal = false, children } = props
+  const { product, breadcrumbs = [], isQuickViewModal = false, children, addToCartCTA } = props
   const { t } = useTranslation('common')
 
   const [purchaseType, setPurchaseType] = useState<string>(PurchaseTypes.ONETIMEPURCHASE)
@@ -120,7 +121,7 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
     product,
     purchaseLocation,
   })
-
+  // setSelectedFulfillmentOption({method: FulfillmentOptionsConstant.SHIP})
   // Getters
   const {
     productName,
@@ -233,10 +234,10 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
       selectedFulfillmentOption?.location?.name ||
       purchaseLocation.code
     ) {
-      setSelectedFulfillmentOption({
-        ...selectedFulfillmentOption,
-        method: value,
-      })
+      // setSelectedFulfillmentOption({
+      //   ...selectedFulfillmentOption,
+      //   method: value,
+      // })
     } else {
       handleProductPickupLocation()
     }
@@ -264,10 +265,10 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
           })
         },
         handleSetStore: async (selectedStore: LocationCustom) => {
-          setSelectedFulfillmentOption({
-            method: FulfillmentOptionsConstant.PICKUP,
-            location: selectedStore,
-          })
+          // setSelectedFulfillmentOption({
+          //   method: FulfillmentOptionsConstant.PICKUP,
+          //   location: selectedStore,
+          // })
         },
       },
     })
@@ -286,10 +287,10 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
     setPurchaseType(option)
     if (option === PurchaseTypes.SUBSCRIPTION) {
       setIsSubscriptionPricingSelected(true)
-      setSelectedFulfillmentOption({
-        ...selectedFulfillmentOption,
-        method: FulfillmentOptionsConstant.SHIP,
-      })
+      // setSelectedFulfillmentOption({
+      //   ...selectedFulfillmentOption,
+      //   method: FulfillmentOptionsConstant.SHIP,
+      // })
     } else {
       setIsSubscriptionPricingSelected(false)
     }
@@ -447,17 +448,17 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
                 })}
               </KiboSelect>
             )}
-            {purchaseType === PurchaseTypes.ONETIMEPURCHASE && (
+            {/* {purchaseType === PurchaseTypes.ONETIMEPURCHASE && (
               <FulfillmentOptions
                 fulfillmentOptions={fulfillmentOptions}
                 selected={selectedFulfillmentOption?.method}
                 onFulfillmentOptionChange={(value: string) => handleFulfillmentOptionChange(value)}
                 onStoreSetOrUpdate={() => handleProductPickupLocation()}
               />
-            )}
+            )} */}
           </Box>
-
-          <Box pt={2} display="flex" sx={{ justifyContent: 'space-between' }}>
+          <BuilderComponent model={'pdp-add-to-cart-cta'} content={addToCartCTA} />
+          {/* <Box pt={2} display="flex" sx={{ justifyContent: 'space-between' }}>
             <Typography fontWeight="600" variant="body2">
               {selectedFulfillmentOption?.method && `${quantityLeft} ${t('item-left')}`}
             </Typography>
@@ -469,7 +470,7 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
             >
               {t('nearby-stores')}
             </MuiLink>
-          </Box>
+          </Box> */}
           <Box paddingY={1} display="flex" flexDirection={'column'} gap={2}>
             <LoadingButton
               variant="contained"

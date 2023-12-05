@@ -14,6 +14,7 @@ import {
   useScrollTrigger,
   Theme,
   styled,
+  ListItem,
 } from '@mui/material'
 import getConfig from 'next/config'
 import Link from 'next/link'
@@ -59,7 +60,7 @@ interface HideOnScrollProps {
 const topHeaderStyles = {
   wrapper: {
     display: 'flex',
-    backgroundColor: 'common.black',
+    backgroundColor: '#c0904d',
     height: 56,
     justifyContent: 'flex-end',
     zIndex: (theme: any) => theme.zIndex.modal,
@@ -74,7 +75,7 @@ const topHeaderStyles = {
 const headerActionAreaStyles = {
   wrapper: {
     display: 'flex',
-    backgroundColor: 'grey.300',
+    backgroundColor: '#fafafa',
     height: 56,
   },
   container: {
@@ -195,7 +196,7 @@ const HeaderActionArea = (props: HeaderActionAreaProps) => {
           </Box>
         )}
         {shouldShowSearchIconInSmallHeader && (
-          <Box maxWidth="calc(100% - 501px)" sx={{ backgroundColor: 'grey.300' }}>
+          <Box maxWidth="calc(100% - 501px)" sx={{ backgroundColor: 'white' }}>
             <MegaMenu categoryTree={categoriesTree} onBackdropToggle={setIsBackdropOpen} />
           </Box>
         )}
@@ -207,7 +208,7 @@ const HeaderActionArea = (props: HeaderActionAreaProps) => {
               onClick={() => toggleSearchBar(true)}
             />
           )}
-          <StoreFinderIcon size={isHeaderSmall ? 'medium' : 'large'} />
+          {/* <StoreFinderIcon size={isHeaderSmall ? 'medium' : 'large'} /> */}
           <AccountIcon
             size={isHeaderSmall ? 'medium' : 'large'}
             onAccountIconClick={onAccountIconClick}
@@ -228,7 +229,36 @@ function HideOnScroll(props: HideOnScrollProps) {
     </Slide>
   )
 }
-
+const StyledNavLink = styled(Link)(({ theme }: { theme: Theme }) => ({
+  color: '#200c33',
+  fontSize: theme?.typography.body1.fontSize,
+  ':hover': {
+    color: '#200c33!important',
+    fontWeight: 'bold',
+  },
+}))
+const listItemStyles = {
+  cursor: 'pointer',
+  borderBottom: '4px solid transparent',
+  pt: 1.5,
+  pb: 1.5,
+  display: 'inline-flex',
+  width: 'auto',
+  color: '#200c33',
+  fontSize: '1.3rem',
+  '&:hover': {
+    color: '#200c33!important',
+    fontWeight: 'bold',
+  },
+  '&.Mui-selected': {
+    borderBottom: '4px solid',
+    borderBottomColor: 'primary.main',
+    background: 'transparent',
+    '& .MuiTypography-root': {
+      textShadow: '0.7px 0px',
+    },
+  },
+}
 const KiboHeader = (props: KiboHeaderProps) => {
   const { navLinks, categoriesTree: initialCategoryTree, isSticky } = props
   const { data: categoriesTree } = useGetCategoryTree(initialCategoryTree)
@@ -301,7 +331,22 @@ const KiboHeader = (props: KiboHeaderProps) => {
             }}
             data-testid="mega-menu-container"
           >
-            <MegaMenu categoryTree={categoriesTree} onBackdropToggle={setIsBackdropOpen} />
+            <ListItem sx={{ ...listItemStyles }}>
+              <StyledNavLink href="/">Skin</StyledNavLink>
+            </ListItem>
+            <ListItem sx={{ ...listItemStyles }}>
+              <StyledNavLink href="/hair">Hair</StyledNavLink>
+            </ListItem>
+            <ListItem sx={{ ...listItemStyles }}>
+              <StyledNavLink href="/special-offer">Special Offers</StyledNavLink>
+            </ListItem>
+            <ListItem sx={{ ...listItemStyles }}>
+              <StyledNavLink href="/shop">Shop</StyledNavLink>
+            </ListItem>
+            <ListItem sx={{ ...listItemStyles }}>
+              <StyledNavLink href="/about-us">About</StyledNavLink>
+            </ListItem>
+            {/* <MegaMenu categoryTree={categoriesTree} onBackdropToggle={setIsBackdropOpen} /> */}
           </Box>
         </HideOnScroll>
 

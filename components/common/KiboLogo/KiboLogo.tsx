@@ -14,16 +14,16 @@ const styles = {
   logoContainer: {
     width: {
       xs: 33,
-      md: 78,
+      md: 283,
     },
     height: {
       xs: 33,
-      md: 78,
+      md: 51,
     },
   },
   smallLogo: {
-    width: 40,
-    height: 40,
+    width: 200,
+    height: 51,
   },
 }
 

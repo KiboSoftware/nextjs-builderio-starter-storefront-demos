@@ -52,6 +52,7 @@ export async function getServerSideProps(context: any) {
   const section = await builder
     .get(productDetailSection, { userAttributes: { slug: `product-${productCode}` } })
     .promise()
+  const addToCartCTA = await builder.get('pdp-add-to-cart-cta').promise()
 
   return {
     redirect: shouldRedirect
@@ -64,6 +65,7 @@ export async function getServerSideProps(context: any) {
       product,
       categoriesTree,
       section: section || null,
+      addToCartCTA: addToCartCTA || null,
       ...(await serverSideTranslations(locale as string, ['common'])),
     },
   }
@@ -100,7 +102,7 @@ const routeHandle = (url: string, productSlug: string[], product: Product) => {
 }
 
 const ProductDetailPage: NextPage = (props: any) => {
-  const { product, section } = props
+  const { product, section, addToCartCTA } = props
 
   const { publicRuntimeConfig } = getConfig()
   const currentUrl = publicRuntimeConfig?.currentUrl
@@ -136,7 +138,11 @@ const ProductDetailPage: NextPage = (props: any) => {
           )}`}
         />
       </Head>
-      <ProductDetailTemplate product={product} breadcrumbs={breadcrumbs}>
+      <ProductDetailTemplate
+        product={product}
+        breadcrumbs={breadcrumbs}
+        addToCartCTA={addToCartCTA}
+      >
         <BuilderComponent model={productDetailSection} content={section} />
       </ProductDetailTemplate>
     </>
