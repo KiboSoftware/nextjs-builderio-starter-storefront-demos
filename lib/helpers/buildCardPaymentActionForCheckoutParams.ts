@@ -15,8 +15,9 @@ export const buildCardPaymentActionForCheckoutParams = (
   creditCardData: CardTypeForCheckout,
   tokenizedData: TokenizedCard,
   billingAddress: CrContact,
-  isBillingAddressAsShipping: boolean
-): PaymentActionInput => {
+  isBillingAddressAsShipping: boolean,
+  installmentPlanCode?: string
+): any => {
   const billingInfo: CrBillingInfo = {
     billingContact: { ...billingAddress, email: billingAddress.email || checkout?.email },
     card: {
@@ -34,6 +35,7 @@ export const buildCardPaymentActionForCheckoutParams = (
   return {
     currencyCode,
     amount: orderGetters.getTotal(checkout),
+    ...(installmentPlanCode && { installmentPlanCode }),
     newBillingInfo: {
       ...billingInfo,
       paymentType: creditCardData.paymentType,

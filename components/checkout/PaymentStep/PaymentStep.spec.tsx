@@ -150,7 +150,43 @@ const userContextValues = (isAuthenticated: boolean, userId: number) => ({
   logout: jest.fn(),
 })
 
-const setup = (param: { checkout: CrOrder; isAuthenticated: boolean; userId: number }) => {
+const { publicRuntimeConfig } = getConfig()
+
+const TestComponent = (param: any) => {
+  const { activeStep, setStepStatusSubmit } = useCheckoutStepContext()
+
+  const handleSubmit = () => {
+    setStepStatusSubmit()
+  }
+
+  return (
+    <>
+      <div data-testid="activeStep">{activeStep}</div>
+      <PaymentStep
+        checkout={param?.checkout || Common.args?.checkout}
+        cardCollection={param?.cardCollection || Common.args?.cardCollection}
+        addressCollection={param?.addressCollection || Common.args?.addressCollection}
+        customerPurchaseOrderAccount={
+          param?.customerPurchaseOrderAccount || Common.args?.customerPurchaseOrderAccount
+        }
+        onAddPayment={onAddPaymentMock}
+        onVoidPayment={onVoidPaymentMock}
+        installmentPlans={[]}
+        updateCheckoutPersonalInfo={() => Promise.resolve()}
+      />
+      <Button onClick={handleSubmit}>Review Order</Button>
+    </>
+  )
+}
+
+const setup = (param: {
+  checkout?: CrOrder
+  cardCollection?: CardCollection
+  addressCollection?: CustomerContactCollection
+  customerPurchaseOrderAccount?: CustomerPurchaseOrderAccount
+  isAuthenticated: boolean
+  userId: number
+}) => {
   const user = userEvent.setup()
   const { isAuthenticated, userId } = param
 

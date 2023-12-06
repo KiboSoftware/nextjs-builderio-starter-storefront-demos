@@ -14,6 +14,7 @@ import {
   Button,
   Box,
   Tooltip,
+  MenuItem,
 } from '@mui/material'
 import getConfig from 'next/config'
 import { useTranslation } from 'next-i18next'
@@ -21,8 +22,15 @@ import { useReCaptcha } from 'next-recaptcha-v3'
 import { Controller, useForm } from 'react-hook-form'
 import * as yup from 'yup'
 
-import { CardDetailsForm } from '@/components/checkout'
-import { AddressForm, KiboTextBox, KiboRadio, PaymentBillingCard } from '@/components/common'
+import { CardDetailsForm, PurchaseOrderForm } from '@/components/checkout'
+import {
+  AddressForm,
+  KiboTextBox,
+  KiboRadio,
+  PaymentBillingCard,
+  KiboSelect,
+  KeyValueDisplay,
+} from '@/components/common'
 import { useCheckoutStepContext, STEP_STATUS, useAuthContext, useSnackbarContext } from '@/context'
 import {
   useGetCards,
@@ -60,8 +68,13 @@ interface PaymentStepProps {
   checkout: CrOrder | Checkout
   contact?: ContactForm
   isMultiShipEnabled?: boolean
+  addressCollection?: CustomerContactCollection
+  cardCollection?: CardCollection
+  customerPurchaseOrderAccount?: CustomerPurchaseOrderAccount
+  installmentPlans: any[]
   onVoidPayment: (id: string, paymentId: string, paymentAction: PaymentActionInput) => Promise<void>
   onAddPayment: (id: string, paymentAction: PaymentActionInput) => Promise<void>
+  updateCheckoutPersonalInfo: (params: any) => Promise<void>
 }
 
 interface PaymentMethod {
@@ -122,7 +135,17 @@ const initialBillingAddressData: Address = {
 }
 
 const PaymentStep = (props: PaymentStepProps) => {
-  const { checkout, isMultiShipEnabled, onVoidPayment, onAddPayment } = props
+  const {
+    checkout,
+    isMultiShipEnabled = false,
+    cardCollection,
+    addressCollection,
+    customerPurchaseOrderAccount,
+    installmentPlans,
+    onVoidPayment,
+    onAddPayment,
+    updateCheckoutPersonalInfo,
+  } = props
 
   // hooks
   const { isAuthenticated, user } = useAuthContext()
@@ -163,10 +186,48 @@ const PaymentStep = (props: PaymentStepProps) => {
   const [billingFormAddress, setBillingFormAddress] = useState<Address>(initialBillingAddressData)
   const [validateForm, setValidateForm] = useState<boolean>(false)
   const [isAddingNewPayment, setIsAddingNewPayment] = useState<boolean>(false)
-  const [isCVVAddedForNewPayment, setIsCVVAddedForNewPayment] = useState<boolean>(false)
-  const [selectedPaymentBillingRadio, setSelectedPaymentBillingRadio] = useState('')
-  const [savedPaymentBillingDetails, setSavedPaymentBillingDetails] = useState<PaymentAndBilling[]>(
-    []
+
+  const [isInstallmentEnabled, setIsInstallmentEnabled] = useState<boolean>(
+    !!(checkoutPayment as any)?.installmentPlanCode
+  )
+  const [selectedInstallmentId, setSelectedInstallmentId] = useState<string>(
+    (checkoutPayment as any)?.installmentPlanCode
+  )
+
+  // const [installmentPlans, setInstallmentPlans] = useState<any[]>([])
+  const selectedInstallment = installmentPlans.find(
+    (installment) => installment?.plan_code === selectedInstallmentId
+  )
+
+  const handlePaymentTypeRadioChange = (value: string) => {
+    setSelectedPaymentTypeRadio(value)
+    setIsAddingNewPayment(false)
+    setBillingFormAddress(initialBillingAddressData)
+  }
+  // Purchase Order details
+  const handleInitialPODetails: SavedPODetails | null = useMemo(() => {
+    return checkoutPaymentType === PaymentType.PURCHASEORDER
+      ? {
+          purchaseOrder: checkoutPayment?.billingInfo?.purchaseOrder as CrPurchaseOrderPayment,
+          billingAddressInfo: {
+            contact: checkoutPayment?.billingInfo?.billingContact as CrContact,
+          },
+        }
+      : null
+  }, [checkoutPaymentType, checkoutPayment])
+
+  const [
+    savedPaymentBillingDetailsForPurchaseOrder,
+    setSavedPaymentBillingDetailsForPurchaseOrder,
+  ] = useState<SavedPODetails | null>(handleInitialPODetails)
+
+  const creditLimit = customerPurchaseOrderAccount?.creditLimit ?? 0
+  const availableBalance = customerPurchaseOrderAccount?.availableBalance ?? 0
+  const customerPurchaseOrderPaymentTerms = (
+    customerPurchaseOrderAccount?.customerPurchaseOrderPaymentTerms as CustomerPurchaseOrderPaymentTerm[]
+  )?.filter(
+    (purchaseOrderTerm: CustomerPurchaseOrderPaymentTerm) =>
+      purchaseOrderTerm.siteId === checkout.siteId
   )
 
   const [cvv, setCvv] = useState<string>('')
@@ -207,12 +268,19 @@ const PaymentStep = (props: PaymentStepProps) => {
     setIsCVVAddedForNewPayment(false)
   }
 
-  const handleSavePaymentMethodCheckbox = () => {
-    setCardFormDetails({
-      ...cardFormDetails,
-      isCardInfoSaved: !cardFormDetails.isCardInfoSaved,
-    })
-  }
+  const shouldShowPurchaseOrderForm =
+    selectedPaymentTypeRadio === PaymentType.PURCHASEORDER && isAddingNewPayment
+
+  const shouldShowBillingAddressForm = shouldShowCardForm || shouldShowPurchaseOrderForm
+
+  const shouldShowPreviouslySavedCards =
+    selectedPaymentTypeRadio === PaymentType.CREDITCARD && cardOptions.length && !isAddingNewPayment
+
+  const shouldShowInstallmentPlans =
+    shouldShowPreviouslySavedCards && checkout.items?.some((item) => item?.subscription)
+
+  // Form Data
+  const [cardFormDetails, setCardFormDetails] = useState<CardForm>({})
 
   const handleCardFormData = (cardData: CardForm) => {
     setCardFormDetails({
@@ -531,6 +599,73 @@ const PaymentStep = (props: PaymentStepProps) => {
     }
   }
 
+  // handle saved payment method radio selection to select different payment method
+  const handleRadioSavedCardSelection = (value: string) => {
+    setStepStatusIncomplete()
+    setSelectedCardRadio(value)
+    setIsCVVAddedForNewPayment(false)
+    resetField('cvv')
+  }
+
+  const handleAddPaymentMethod = () => {
+    setBillingFormAddress(initialBillingAddressData)
+    setIsAddingNewPayment(true)
+  }
+
+  const handleTokenization = async (card: CardForm) => {
+    const pciHost = publicRuntimeConfig?.pciHost
+    const apiHost = publicRuntimeConfig?.apiHost as string
+    const tokenizedCardResponse: TokenizedCard = await tokenizeCreditCardPayment(
+      card,
+      pciHost,
+      apiHost
+    )
+
+    if (!tokenizedCardResponse) return
+
+    setIsAddingNewPayment(false)
+
+    if (!cardOptions.some((each) => each.cardInfo?.id === tokenizedCardResponse.id)) {
+      setCardOptions([
+        ...cardOptions,
+        {
+          cardInfo: {
+            id: tokenizedCardResponse.id,
+            cardNumberPart: tokenizedCardResponse.numberPart,
+            paymentType: PaymentType.CREDITCARD,
+            expireMonth: card.expireMonth,
+            expireYear: card.expireYear,
+            isCardInfoSaved: card.isCardInfoSaved,
+            cardType: card.cardType,
+          },
+          billingAddressInfo: {
+            ...billingFormAddress,
+            isSameBillingShippingAddress: billingFormAddress.isSameBillingShippingAddress,
+          },
+        },
+      ])
+    }
+
+    setSelectedCardRadio(tokenizedCardResponse.id as string)
+    setValidateForm(false)
+    setIsCVVAddedForNewPayment(true)
+  }
+
+  const handlePurchaseOrderValidation = async (purchaseOrderFormData: any) => {
+    setIsAddingNewPayment(false)
+    setSavedPaymentBillingDetailsForPurchaseOrder({
+      purchaseOrder: {
+        purchaseOrderNumber: purchaseOrderFormData?.purchaseOrderNumber,
+        paymentTerm: purchaseOrderFormData?.paymentTerm,
+      },
+      billingAddressInfo: {
+        ...billingFormAddress,
+        isSameBillingShippingAddress: billingFormAddress.isSameBillingShippingAddress,
+      },
+    })
+    setValidateForm(false)
+  }
+
   const handleValidateBillingAddress = async (address: CuAddress) => {
     try {
       await validateCustomerAddress.mutateAsync({
@@ -545,7 +680,195 @@ const PaymentStep = (props: PaymentStepProps) => {
     }
   }
 
-  // handle initial load of cards and contacts
+  const submitFormWithRecaptcha = () => {
+    if (!executeRecaptcha) {
+      console.log('Execute recaptcha not yet available')
+      return
+    }
+    executeRecaptcha('enquiryFormSubmit').then(async (gReCaptchaToken: any) => {
+      const captcha = await validateGoogleReCaptcha(gReCaptchaToken)
+
+      if (captcha?.status === 'success') {
+        await handlePayment()
+      } else {
+        showSnackbar(captcha.message, 'error')
+      }
+    })
+  }
+
+  const getCardPaymentAction = async () => {
+    let paymentActionToBeAdded: PaymentActionInput = {}
+    let paymentActionToBeVoided: PaymentActionInput = {}
+
+    const selectedPaymentMethod = cardOptions.find(
+      (each) => each?.cardInfo?.id === selectedCardRadio
+    )
+
+    const {
+      cardType,
+      expireMonth,
+      expireYear,
+      isCardInfoSaved,
+      paymentType,
+      cardNumberPart,
+      id,
+      cardholderName,
+    } = cardGetters.getCardDetails(selectedPaymentMethod?.cardInfo as SavedCard)
+
+    if (!isCVVAddedForNewPayment) {
+      await handleTokenization({
+        id,
+        cardType,
+        cvv,
+        cardNumber: cardNumberPart,
+        cardholderName,
+      })
+    }
+
+    const cardDetails: CardTypeForCheckout = {
+      cardType,
+      expireMonth,
+      expireYear,
+      isCardInfoSaved,
+      paymentType,
+      paymentWorkflow: PaymentWorkflow.MOZU,
+    }
+
+    const tokenizedData: TokenizedCard = {
+      id,
+      numberPart: cardNumberPart,
+    }
+
+    const isSameAsShipping = addressGetters.getIsBillingShippingAddressSame(
+      selectedPaymentMethod?.billingAddressInfo
+    )
+
+    const paymentWithNewStatus = orderGetters.getSelectedPaymentType(checkout)
+
+    if (
+      paymentWithNewStatus?.billingInfo?.card?.paymentServiceCardId === selectedCardRadio &&
+      !isInstallmentEnabled
+    ) {
+      setStepStatusComplete()
+      setStepNext()
+      return
+    }
+    paymentActionToBeAdded = {
+      ...buildCardPaymentActionForCheckoutParams(
+        CurrencyCode.US,
+        checkout,
+        { ...cardDetails },
+        tokenizedData,
+        selectedPaymentMethod?.billingAddressInfo?.contact as CrContact,
+        isSameAsShipping,
+        isInstallmentEnabled && selectedInstallmentId ? selectedInstallmentId : ''
+      ),
+      actionName: '',
+    }
+
+    if (paymentWithNewStatus?.paymentType === PaymentType.CREDITCARD) {
+      const card = paymentWithNewStatus?.billingInfo?.card
+      const voidedCard = {
+        paymentWorkflow: paymentWithNewStatus?.paymentWorkflow as string,
+        isCardInfoSaved: card?.isCardInfoSaved as boolean,
+        cardType: card?.paymentOrCardType as string,
+        expireMonth: card?.expireMonth as number,
+        expireYear: card?.expireYear as number,
+        paymentType: paymentWithNewStatus?.paymentType as string,
+      }
+
+      paymentActionToBeVoided = buildCardPaymentActionForCheckoutParams(
+        CurrencyCode.US,
+        checkout,
+        voidedCard,
+        tokenizedData,
+        paymentWithNewStatus?.billingInfo?.billingContact as CrContact,
+        isSameAsShipping
+      )
+
+      paymentActionToBeVoided = { ...paymentActionToBeVoided, actionName: 'VoidPayment' }
+    }
+
+    return {
+      paymentActionToBeAdded,
+      paymentActionToBeVoided,
+      paymentId: paymentWithNewStatus?.id as string,
+    }
+  }
+
+  const getPurchaseOrderPaymentAction = () => {
+    let paymentActionToBeAdded: PaymentActionInput = {}
+    let paymentActionToBeVoided: PaymentActionInput = {}
+
+    const isSameAsShipping = addressGetters.getIsBillingShippingAddressSame(
+      savedPaymentBillingDetailsForPurchaseOrder?.billingAddressInfo
+    )
+    const purchaseOrderData = savedPaymentBillingDetailsForPurchaseOrder?.purchaseOrder ?? {}
+
+    const paymentWithNewStatus = orderGetters.getSelectedPaymentType(checkout)
+
+    if (paymentWithNewStatus?.paymentType === PaymentType.PURCHASEORDER) {
+      const purchaseOrderDataWithNewStatus = {
+        purchaseOrderNumber: paymentWithNewStatus?.billingInfo?.purchaseOrder?.purchaseOrderNumber,
+        purchaseOrderPaymentTerms: paymentWithNewStatus?.billingInfo?.purchaseOrder?.paymentTerm,
+      }
+
+      paymentActionToBeVoided = buildPurchaseOrderPaymentActionForCheckoutParams(
+        CurrencyCode.US,
+        checkout,
+        purchaseOrderDataWithNewStatus,
+        paymentWithNewStatus?.billingInfo?.billingContact as CrContact,
+        isSameAsShipping
+      )
+
+      paymentActionToBeVoided = { ...paymentActionToBeVoided, actionName: 'VoidPayment' }
+    }
+
+    paymentActionToBeAdded = {
+      ...buildPurchaseOrderPaymentActionForCheckoutParams(
+        CurrencyCode.US,
+        checkout,
+        purchaseOrderData,
+        savedPaymentBillingDetailsForPurchaseOrder?.billingAddressInfo?.contact as CrContact,
+        isSameAsShipping
+      ),
+      actionName: '',
+    }
+
+    return {
+      paymentActionToBeAdded,
+      paymentActionToBeVoided,
+      paymentId: paymentWithNewStatus?.id as string,
+    }
+  }
+
+  const handlePayment = async () => {
+    const paymentMethodSelection: any = {
+      [PaymentType.PURCHASEORDER]: getPurchaseOrderPaymentAction,
+      [PaymentType.CREDITCARD]: getCardPaymentAction,
+    }
+
+    const responseForVoid =
+      checkoutPaymentType && (await paymentMethodSelection[checkoutPaymentType]())
+
+    if (responseForVoid?.paymentActionToBeVoided?.actionName) {
+      await onVoidPayment(
+        checkout?.id as string,
+        responseForVoid.paymentId,
+        responseForVoid.paymentActionToBeVoided
+      )
+    }
+
+    const responseForAdd =
+      selectedPaymentTypeRadio && (await paymentMethodSelection[selectedPaymentTypeRadio]())
+
+    if (checkout?.id && responseForAdd?.paymentActionToBeAdded) {
+      await onAddPayment(checkout.id, responseForAdd?.paymentActionToBeAdded)
+      setStepStatusComplete()
+      setStepNext()
+    }
+  }
+
   useEffect(() => {
     // handle saved payment methods in account
     if ((isCustomerCardsSuccess && isCustomerContactsSuccess) || !isAuthenticated) {
@@ -629,159 +952,155 @@ const PaymentStep = (props: PaymentStepProps) => {
                             postalOrZipCode={addressGetters.getPostalOrZipCode(address)}
                             stateOrProvince={addressGetters.getStateOrProvince(address)}
                           />
-                          {selectedPaymentBillingRadio === card?.cardInfo?.id &&
-                            !isCVVAddedForNewPayment && (
-                              <Box pt={2} width={'50%'}>
-                                <FormControl sx={{ width: '100%' }}>
-                                  <Controller
-                                    name="cvv"
-                                    control={control}
-                                    defaultValue={defaultCvv?.cvv}
-                                    render={({ field }) => {
-                                      return (
-                                        <KiboTextBox
-                                          type="password"
-                                          value={field.value || ''}
-                                          label={t('security-code')}
-                                          placeholder={t('security-code-placeholder')}
-                                          required={true}
-                                          onChange={(_, value) => {
-                                            field.onChange(value)
-                                            setCvv(value)
-                                          }}
-                                          onBlur={field.onBlur}
-                                          error={!!errors?.cvv}
-                                          helperText={errors?.cvv?.message as unknown as string}
-                                          icon={
-                                            <Box pr={1} pt={0.5} sx={{ cursor: 'pointer' }}>
-                                              <Tooltip
-                                                title={t('cvv-tooltip-text')}
-                                                placement="top"
-                                              >
-                                                <Help color="disabled" />
-                                              </Tooltip>
-                                            </Box>
-                                          }
-                                        />
-                                      )
-                                    }}
-                                  />
-                                </FormControl>
-                              </Box>
+                        ) : null}
+                      </>
+                    ) : null}
+                    {shouldShowPurchaseOrderForm ? (
+                      <PurchaseOrderForm
+                        creditLimit={creditLimit}
+                        availableBalance={availableBalance}
+                        validateForm={validateForm}
+                        purchaseOrderPaymentTerms={customerPurchaseOrderPaymentTerms}
+                        onSavePurchaseData={handlePurchaseOrderFormData}
+                        onFormStatusChange={handlePurchaseOrderFormValidDetails}
+                      />
+                    ) : null}
+                    {shouldShowBillingAddressForm ? (
+                      <>
+                        <StyledHeadings variant="h2" sx={{ paddingTop: '3.125rem' }}>
+                          {t('billing-address')}
+                        </StyledHeadings>
+                        {!isMultiShipEnabled &&
+                          (checkout as CrOrder)?.fulfillmentInfo?.shippingMethodCode &&
+                          (checkout as CrOrder)?.fulfillmentInfo?.shippingMethodName && (
+                            <FormControlLabel
+                              sx={{
+                                width: '100%',
+                                paddingLeft: '0.5rem',
+                              }}
+                              control={
+                                <Checkbox name={`${t('billing-address-same-as-shipping')}`} />
+                              }
+                              label={`${t('billing-address-same-as-shipping')}`}
+                              onChange={(_, value) => handleSameAsShippingAddressCheckbox(value)}
+                            />
+                          )}
+                        <AddressForm
+                          key={selectedPaymentTypeRadio}
+                          contact={billingFormAddress.contact}
+                          setAutoFocus={false}
+                          isUserLoggedIn={isAuthenticated}
+                          onSaveAddress={handleBillingFormAddress}
+                          validateForm={validateForm}
+                          onFormStatusChange={handleBillingFormValidDetails}
+                        />
+                        <Stack pl={1} gap={2} sx={{ width: { xs: '100%', md: '50%' } }}>
+                          <Button
+                            variant="contained"
+                            color="secondary"
+                            onClick={cancelAddingNewPaymentMethod}
+                          >
+                            {t('cancel')}
+                          </Button>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            {...(isAddPaymentMethodButtonDisabled() && { disabled: true })}
+                            onClick={handleSaveNewPaymentMethod}
+                          >
+                            {t('save-payment-method')}
+                          </Button>
+                        </Stack>
+                      </>
+                    ) : null}
+                    {!(shouldShowPurchaseOrderForm || shouldShowCardForm) ? (
+                      <>
+                        {shouldShowInstallmentPlans ? (
+                          <FormControlLabel
+                            sx={{
+                              width: '100%',
+                              paddingLeft: '0.5rem',
+                            }}
+                            control={
+                              <Checkbox
+                                checked={isInstallmentEnabled}
+                                onChange={(_, checked) => setIsInstallmentEnabled(checked)}
+                                data-testid="convert-to-installments"
+                              />
+                            }
+                            label={`${t('Convert to installments')}`}
+                          />
+                        ) : null}
+
+                        {isInstallmentEnabled && (
+                          <Box sx={{ pl: 5 }}>
+                            <Box pb={1}>
+                              <Typography variant="h4">{t('Installment plan details')}</Typography>
+                            </Box>
+                            <Box pb={1} width="60%">
+                              <KiboSelect
+                                name={'adjustment'}
+                                value={selectedInstallmentId}
+                                onChange={(_, value) => {
+                                  setSelectedInstallmentId(value)
+                                }}
+                              >
+                                {installmentPlans?.map((option: any) => (
+                                  <MenuItem
+                                    sx={{ typography: 'body2' }}
+                                    key={option?.id}
+                                    value={option?.plan_code}
+                                  >
+                                    {`${option?.no_of_payments} installments for ${option?.installment_frequency} days`}
+                                  </MenuItem>
+                                ))}
+                              </KiboSelect>
+                            </Box>
+
+                            {selectedInstallment && (
+                              <>
+                                <KeyValueDisplay
+                                  option={{
+                                    name: 'First installment amount',
+                                    value: selectedInstallment.first_payment_amount,
+                                  }}
+                                />
+                                <KeyValueDisplay
+                                  option={{
+                                    name: 'Frequency',
+                                    value: `${selectedInstallment.installment_frequency} days`,
+                                  }}
+                                />
+                                <KeyValueDisplay
+                                  option={{
+                                    name: 'Total number of payments',
+                                    value: selectedInstallment.no_of_payments,
+                                  }}
+                                />
+                              </>
                             )}
-                        </>
-                      ),
-                    }
-                  })}
-                  selected={selectedPaymentBillingRadio}
-                  align="flex-start"
-                  onChange={handleRadioSavedCardSelection}
-                />
-              </>
-            ) : (
-              <Typography variant="h4">{t('no-previously-saved-payment-methods')}</Typography>
-            )}
+                          </Box>
+                        )}
 
-            <Button
-              variant="contained"
-              color="inherit"
-              sx={{ width: { xs: '100%', sm: '50%' } }}
-              onClick={handleAddPaymentMethod}
-            >
-              {t('add-payment-method')}
-            </Button>
-          </Stack>
-        </>
-      )}
-
-      {/* Payment Method Options Radio List */}
-      {shouldShowPaymentMethodOptions() && (
-        <FormControl sx={{ maxWidth: '26.313rem' }}>
-          <RadioGroup
-            aria-labelledby="payment-types-radio"
-            name="radio-buttons-group"
-            value={newPaymentMethod}
-            onChange={handlePaymentMethodSelection}
-            data-testid="payment-types"
-          >
-            {paymentMethods.map((paymentMethod: PaymentMethod) => {
-              return (
-                <FormControlLabel
-                  key={paymentMethod.id}
-                  sx={{ ...formControlLabelStyle }}
-                  value={paymentMethod.id}
-                  control={<Radio sx={{ ...radioStyle }} />}
-                  label={paymentMethod.name}
-                />
-              )
-            })}
-          </RadioGroup>
-        </FormControl>
-      )}
-
-      {/* Card Details Form */}
-      {shouldShowCardForm() && (
-        <CardDetailsForm
-          validateForm={validateForm}
-          onSaveCardData={handleCardFormData}
-          onFormStatusChange={handleCardFormValidDetails}
-        />
-      )}
-
-      {/* Save Payment Method for later checkbox */}
-      {shouldShowCardForm() && isAuthenticated && (
-        <FormControlLabel
-          sx={{
-            width: '100%',
-            paddingLeft: '0.5rem',
-          }}
-          control={
-            <Checkbox onChange={handleSavePaymentMethodCheckbox} data-testid="save-payment" />
-          }
-          label={`${t('save-payment-method-checkbox')}`}
-        />
-      )}
-
-      {/* Billing Address Form */}
-      {shouldShowBillingAddressForm() && (
-        <>
-          <StyledHeadings variant="h2" sx={{ paddingTop: '3.125rem' }}>
-            {t('billing-address')}
-          </StyledHeadings>
-          {!isMultiShipEnabled && (
-            <FormControlLabel
-              sx={{
-                width: '100%',
-                paddingLeft: '0.5rem',
-              }}
-              control={<Checkbox name={`${t('billing-address-same-as-shipping')}`} />}
-              label={`${t('billing-address-same-as-shipping')}`}
-              onChange={(_, value) => handleSameAsShippingAddressCheckbox(value)}
-            />
-          )}
-          <AddressForm
-            contact={billingFormAddress.contact}
-            setAutoFocus={false}
-            isUserLoggedIn={isAuthenticated}
-            onSaveAddress={handleBillingFormAddress}
-            validateForm={validateForm}
-            onFormStatusChange={handleBillingFormValidDetails}
-          />
-          <Stack pl={1} gap={2} sx={{ width: { xs: '100%', md: '50%' } }}>
-            <Button variant="contained" color="secondary" onClick={cancelAddingNewPaymentMethod}>
-              {t('cancel')}
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              {...(isAddPaymentMethodButtonDisabled() && { disabled: true })}
-              onClick={handleSaveNewPaymentMethod}
-            >
-              {t('save-payment-method')}
-            </Button>
-          </Stack>
-        </>
-      )}
+                        <Box pt={2}>
+                          <Button
+                            variant="contained"
+                            color="inherit"
+                            sx={{ width: { xs: '100%', sm: '50%' } }}
+                            onClick={handleAddPaymentMethod}
+                          >
+                            {t('add-payment-method')}
+                          </Button>
+                        </Box>
+                      </>
+                    ) : null}
+                  </Box>
+                ) : null}
+              </Box>
+            )
+          })}
+        </RadioGroup>
+      </FormControl>
     </Stack>
   )
 }

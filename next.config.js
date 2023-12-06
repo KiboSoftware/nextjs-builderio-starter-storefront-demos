@@ -23,6 +23,8 @@ module.exports = {
       'images.ctfassets.net',
       'cdn.builder.io',
       'http',
+      'cdn-sb.euw1.kibocommerce.com',
+      'cdn-sb.sandbox.kibong-qa.com',
     ],
     remotePatterns: [
       {
@@ -37,6 +39,7 @@ module.exports = {
         port: '',
         pathname: '**',
       },
+     
     ],
     deviceSizes: [
       100, 240, 340, 380, 400, 450, 500, 550, 600, 640, 750, 828, 1080, 1200, 1920, 2048, 3840,
