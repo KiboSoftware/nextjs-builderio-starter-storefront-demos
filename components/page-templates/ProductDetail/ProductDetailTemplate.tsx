@@ -165,9 +165,9 @@ const ProductDetailTemplate = (props: any) => {
   )
 
   const isValidForAddToCart = () => {
-    if (quantityLeft < 1) {
-      return false
-    }
+    // if (quantityLeft < 1) {
+    //   return false
+    // }
     if (purchaseType === PurchaseTypes.SUBSCRIPTION) {
       return !!selectedFrequency
     } else {
