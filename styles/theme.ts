@@ -43,7 +43,7 @@ const buttonStyleOverrides = {
   },
   containedPrimary: ({ ownerState, theme }: { ownerState: any; theme: any }) => ({
     ...(ownerState.disabled && {
-      backgroundColor: `${theme.palette.primary.light} !important`,
+      backgroundColor: `${theme.palette.primary.main} !important`,
       color: `${theme.palette.common.white} !important`,
     }),
   }),
