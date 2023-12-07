@@ -1,7 +1,6 @@
 import { BuilderComponent, builder } from '@builder.io/react'
 import getConfig from 'next/config'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
-import BlankLayout from '@/components/layout/BlankLayout/BlankLayout'
 import getCategoryTree from '@/lib/api/operations/get-category-tree'
 import type { CategoryTreeResponse } from '@/lib/types'
 
@@ -74,6 +73,6 @@ const Page = (props: any) => {
 
 export default Page
 
-Page.getLayout = function getLayout(page: any, pageProps: any = {}) {
+Page.getLayout = function getLayout(page: any) {
   return <>{page}</>
 }
