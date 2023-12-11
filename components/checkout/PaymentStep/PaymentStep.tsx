@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 
 import { yupResolver } from '@hookform/resolvers/yup'
 import Help from '@mui/icons-material/Help'
@@ -22,7 +22,10 @@ import { useReCaptcha } from 'next-recaptcha-v3'
 import { Controller, useForm } from 'react-hook-form'
 import * as yup from 'yup'
 
-import { CardDetailsForm, PurchaseOrderForm } from '@/components/checkout'
+import {
+  CardDetailsForm,
+  // PurchaseOrderForm
+} from '@/components/checkout'
 import {
   AddressForm,
   KiboTextBox,
@@ -32,16 +35,19 @@ import {
   KeyValueDisplay,
 } from '@/components/common'
 import { useCheckoutStepContext, STEP_STATUS, useAuthContext, useSnackbarContext } from '@/context'
+import { usePaymentTypes, useValidateCustomerAddress } from '@/hooks'
 import {
-  useGetCards,
-  useGetCustomerAddresses,
-  usePaymentTypes,
-  useValidateCustomerAddress,
-} from '@/hooks'
-import { CurrencyCode, PaymentType, PaymentWorkflow } from '@/lib/constants'
+  // CountryCode,
+  CurrencyCode,
+  PaymentType,
+  PaymentWorkflow,
+} from '@/lib/constants'
 import { addressGetters, cardGetters, orderGetters, userGetters } from '@/lib/getters'
 import {
+  // actions,
   buildCardPaymentActionForCheckoutParams,
+  // buildPurchaseOrderPaymentActionForCheckoutParams,
+  // hasPermission,
   tokenizeCreditCardPayment,
   validateGoogleReCaptcha,
 } from '@/lib/helpers'
@@ -53,6 +59,7 @@ import type {
   TokenizedCard,
   PaymentAndBilling,
   CardTypeForCheckout,
+  SavedBillingAddress,
 } from '@/lib/types'
 
 import type {
@@ -62,6 +69,12 @@ import type {
   PaymentActionInput,
   Checkout,
   CuAddress,
+  CustomerPurchaseOrderPaymentTerm,
+  CrPurchaseOrderPayment,
+  CrPurchaseOrderPaymentTerm,
+  CardCollection,
+  CustomerContactCollection,
+  CustomerPurchaseOrderAccount,
 } from '@/lib/gql/types'
 
 interface PaymentStepProps {
@@ -77,7 +90,7 @@ interface PaymentStepProps {
   updateCheckoutPersonalInfo: (params: any) => Promise<void>
 }
 
-interface PaymentMethod {
+interface PaymentsType {
   id: string
   name: string
 }
@@ -94,6 +107,7 @@ const formControlLabelStyle = {
   width: '100%',
   marginLeft: '0',
   marginBottom: '1.75rem',
+  maxWidth: '26.313rem',
 }
 
 const radioStyle = {
@@ -111,6 +125,12 @@ const initialCardFormData: CardForm = {
   cvv: '',
   isCardDetailsValidated: false,
   isCardInfoSaved: false,
+}
+
+const initialPurchaseOrderFormData: any = {
+  poNumber: '',
+  purchaseOrderPaymentTerms: '',
+  isPurchaseOrderFormValidated: false,
 }
 
 const initialBillingAddressData: Address = {
@@ -132,7 +152,13 @@ const initialBillingAddressData: Address = {
   },
   isSameBillingShippingAddress: false,
   isAddressValid: false,
+  isDataUpdated: false,
 }
+
+type SavedPODetails = {
+  purchaseOrder: CrPurchaseOrderPayment
+  billingAddressInfo: SavedBillingAddress
+} | null
 
 const PaymentStep = (props: PaymentStepProps) => {
   const {
@@ -147,30 +173,24 @@ const PaymentStep = (props: PaymentStepProps) => {
     updateCheckoutPersonalInfo,
   } = props
 
-  // hooks
+  const { t } = useTranslation('common')
   const { isAuthenticated, user } = useAuthContext()
+  const { loadPaymentTypes } = usePaymentTypes()
+  const paymentTypes = loadPaymentTypes()
   const { validateCustomerAddress } = useValidateCustomerAddress()
 
-  const { t } = useTranslation('common')
+  const newPaymentTypes = paymentTypes
+    .map((paymentType: any) =>
+      paymentType.id === 'CreditCard' ||
+      (false &&
+        paymentType.id === 'PurchaseOrder' &&
+        user?.id &&
+        customerPurchaseOrderAccount?.isEnabled)
+        ? paymentType
+        : null
+    )
+    .filter(Boolean)
 
-  const { executeRecaptcha } = useReCaptcha()
-  const { showSnackbar } = useSnackbarContext()
-
-  const { publicRuntimeConfig } = getConfig()
-  const reCaptchaKey = publicRuntimeConfig.recaptcha.reCaptchaKey
-
-  const { loadPaymentTypes } = usePaymentTypes()
-  const paymentMethods = loadPaymentTypes()
-
-  // getting saved card and billing details
-  const { data: customerCardsCollection, isSuccess: isCustomerCardsSuccess } = useGetCards(
-    user?.id as number
-  )
-
-  const { data: customerContactsCollection, isSuccess: isCustomerContactsSuccess } =
-    useGetCustomerAddresses(user?.id as number)
-
-  // checkout context handling
   const {
     stepStatus,
     setStepNext,
@@ -179,12 +199,20 @@ const PaymentStep = (props: PaymentStepProps) => {
     setStepStatusIncomplete,
   } = useCheckoutStepContext()
 
-  // states
-  const [newPaymentMethod, setNewPaymentMethod] = useState<string>('')
-  const [cardFormDetails, setCardFormDetails] = useState<CardForm>(initialCardFormData)
+  const { executeRecaptcha } = useReCaptcha()
+  const { showSnackbar } = useSnackbarContext()
 
-  const [billingFormAddress, setBillingFormAddress] = useState<Address>(initialBillingAddressData)
-  const [validateForm, setValidateForm] = useState<boolean>(false)
+  const { publicRuntimeConfig } = getConfig()
+  const reCaptchaKey = publicRuntimeConfig.recaptcha.reCaptchaKey
+  const allowInvalidAddresses = publicRuntimeConfig.allowInvalidAddresses
+
+  // getting the selected Payment type from checkout.payments
+  const checkoutPayment = orderGetters.getSelectedPaymentType(checkout)
+  const checkoutPaymentType = checkoutPayment?.paymentType?.toString() ?? ''
+
+  const [selectedPaymentTypeRadio, setSelectedPaymentTypeRadio] =
+    useState<string>(checkoutPaymentType)
+
   const [isAddingNewPayment, setIsAddingNewPayment] = useState<boolean>(false)
 
   const [isInstallmentEnabled, setIsInstallmentEnabled] = useState<boolean>(
@@ -204,22 +232,22 @@ const PaymentStep = (props: PaymentStepProps) => {
     setIsAddingNewPayment(false)
     setBillingFormAddress(initialBillingAddressData)
   }
-  // Purchase Order details
-  const handleInitialPODetails: SavedPODetails | null = useMemo(() => {
-    return checkoutPaymentType === PaymentType.PURCHASEORDER
-      ? {
-          purchaseOrder: checkoutPayment?.billingInfo?.purchaseOrder as CrPurchaseOrderPayment,
-          billingAddressInfo: {
-            contact: checkoutPayment?.billingInfo?.billingContact as CrContact,
-          },
-        }
-      : null
-  }, [checkoutPaymentType, checkoutPayment])
+  // // Purchase Order details
+  // const handleInitialPODetails: SavedPODetails | null = useMemo(() => {
+  //   return checkoutPaymentType === PaymentType.PURCHASEORDER
+  //     ? {
+  //         purchaseOrder: checkoutPayment?.billingInfo?.purchaseOrder as CrPurchaseOrderPayment,
+  //         billingAddressInfo: {
+  //           contact: checkoutPayment?.billingInfo?.billingContact as CrContact,
+  //         },
+  //       }
+  //     : null
+  // }, [checkoutPaymentType, checkoutPayment])
 
-  const [
-    savedPaymentBillingDetailsForPurchaseOrder,
-    setSavedPaymentBillingDetailsForPurchaseOrder,
-  ] = useState<SavedPODetails | null>(handleInitialPODetails)
+  // const [
+  //   savedPaymentBillingDetailsForPurchaseOrder,
+  //   setSavedPaymentBillingDetailsForPurchaseOrder,
+  // ] = useState<SavedPODetails | null>(handleInitialPODetails)
 
   const creditLimit = customerPurchaseOrderAccount?.creditLimit ?? 0
   const availableBalance = customerPurchaseOrderAccount?.availableBalance ?? 0
@@ -230,6 +258,15 @@ const PaymentStep = (props: PaymentStepProps) => {
       purchaseOrderTerm.siteId === checkout.siteId
   )
 
+  // const shouldShowPreviouslySavedPaymentsForPurchaseOrder =
+  //   selectedPaymentTypeRadio === PaymentType.PURCHASEORDER &&
+  //   savedPaymentBillingDetailsForPurchaseOrder?.purchaseOrder &&
+  //   !isAddingNewPayment
+
+  // Credit Card
+  const [cardOptions, setCardOptions] = useState<PaymentAndBilling[]>([])
+  const [selectedCardRadio, setSelectedCardRadio] = useState('')
+  const [isCVVAddedForNewPayment, setIsCVVAddedForNewPayment] = useState<boolean>(false)
   const [cvv, setCvv] = useState<string>('')
 
   const useDetailsSchema = () => {
@@ -245,8 +282,9 @@ const PaymentStep = (props: PaymentStepProps) => {
     cvv: '',
   }
   const {
-    formState: { errors, isValid },
+    formState: { errors, isValid: isCvvValid },
     control,
+    resetField,
   } = useForm({
     mode: 'all',
     reValidateMode: 'onBlur',
@@ -256,20 +294,13 @@ const PaymentStep = (props: PaymentStepProps) => {
   })
 
   // default card details if payment method is card
-  const defaultCustomerAccountCard = userGetters.getDefaultPaymentBillingMethod(
-    savedPaymentBillingDetails
-  )
+  const defaultCustomerAccountCard = userGetters.getDefaultPaymentBillingMethod(cardOptions)
 
-  // handle saved payment method radio selection to select different payment method
-  const handleRadioSavedCardSelection = (value: string) => {
-    setStepStatusIncomplete()
-    setSelectedPaymentBillingRadio(value)
-    setCvv('')
-    setIsCVVAddedForNewPayment(false)
-  }
+  const shouldShowCardForm =
+    selectedPaymentTypeRadio === PaymentType.CREDITCARD && isAddingNewPayment
 
-  const shouldShowPurchaseOrderForm =
-    selectedPaymentTypeRadio === PaymentType.PURCHASEORDER && isAddingNewPayment
+  const shouldShowPurchaseOrderForm = false
+  // selectedPaymentTypeRadio === PaymentType.PURCHASEORDER && isAddingNewPayment
 
   const shouldShowBillingAddressForm = shouldShowCardForm || shouldShowPurchaseOrderForm
 
@@ -291,273 +322,103 @@ const PaymentStep = (props: PaymentStepProps) => {
     setCvv(cardData.cvv as string)
   }
 
-  const handleSameAsShippingAddressCheckbox = (value: boolean) => {
-    let address = initialBillingAddressData
-    if (value) {
-      address = {
-        contact: (checkout as CrOrder)?.fulfillmentInfo?.fulfillmentContact as ContactForm,
-      }
-    } else if (billingFormAddress.isDataUpdated) {
-      address = billingFormAddress
-    }
+  const handleCardFormValidDetails = (isValid: boolean) => {
+    setCardFormDetails({ ...cardFormDetails, isCardDetailsValidated: isValid })
+  }
 
-    setBillingFormAddress({
-      ...address,
-      isAddressValid: true,
-      isSameBillingShippingAddress: value,
+  const handleSavePaymentMethodCheckbox = () => {
+    setCardFormDetails({
+      ...cardFormDetails,
+      isCardInfoSaved: !cardFormDetails.isCardInfoSaved,
     })
   }
+
+  // purchase order form values
+  const [purchaseOrderFormDetails, setPurchaseOrderFormDetails] = useState<
+    CrPurchaseOrderPayment & { isPurchaseOrderFormValidated?: boolean }
+  >({})
+
+  const handlePurchaseOrderFormData = (purchaseOrderFormData: any) => {
+    setPurchaseOrderFormDetails({
+      ...purchaseOrderFormDetails,
+      ...purchaseOrderFormData,
+    })
+  }
+
+  const handlePurchaseOrderFormValidDetails = (isValid: boolean) => {
+    setPurchaseOrderFormDetails({
+      ...purchaseOrderFormDetails,
+      isPurchaseOrderFormValidated: isValid,
+    })
+  }
+
+  // Address
+  const [billingFormAddress, setBillingFormAddress] = useState<Address>(initialBillingAddressData)
+
+  const [validateForm, setValidateForm] = useState<boolean>(false)
 
   const handleBillingFormAddress = (address: Address) => {
     const updatedAddress = {
       contact: {
         ...address.contact,
+        // email: checkout?.email,
       },
-      email: checkout?.email,
       isAddressValid: true,
       isDataUpdated: address.isDataUpdated,
     } as Address
-    setBillingFormAddress(updatedAddress)
-  }
-
-  // when adding new payment method, set payment method type (ex: credit card / check)
-  const handlePaymentMethodSelection = (event: ChangeEvent<HTMLInputElement>) => {
-    setIsAddingNewPayment(true)
-    setNewPaymentMethod(event.target.value)
-  }
-
-  const submitFormWithRecaptcha = () => {
-    if (!executeRecaptcha) {
-      console.log('Execute recaptcha not yet available')
-      return
-    }
-    executeRecaptcha('enquiryFormSubmit').then(async (gReCaptchaToken: any) => {
-      const captcha = await validateGoogleReCaptcha(gReCaptchaToken)
-
-      if (captcha?.status === 'success') {
-        await saveCardDataToOrder()
-      } else {
-        showSnackbar(captcha.message, 'error')
-      }
+    setBillingFormAddress({
+      ...billingFormAddress,
+      ...updatedAddress,
     })
-  }
-
-  const shouldShowPreviouslySavedPayments = () => {
-    if (Boolean(savedPaymentBillingDetails?.length)) {
-      return isAddingNewPayment ? false : true
-    }
-    return false
-  }
-
-  const shouldShowPaymentMethodOptions = () => {
-    if (!savedPaymentBillingDetails?.length || isAddingNewPayment) return true
-
-    return false
-  }
-
-  const shouldShowCardForm = () => {
-    if (isAddingNewPayment && newPaymentMethod === PaymentType.CREDITCARD) {
-      return true
-    }
-
-    return false
-  }
-
-  const shouldShowBillingAddressForm = () => {
-    if (isAddingNewPayment && Boolean(newPaymentMethod)) {
-      return true
-    }
-    return false
-  }
-
-  const isAddPaymentMethodButtonDisabled = () => {
-    return !(billingFormAddress.isAddressValid && cardFormDetails.isCardDetailsValidated)
-  }
-
-  const cancelAddingNewPaymentMethod = () => {
-    setIsAddingNewPayment(false)
-    setNewPaymentMethod('')
-    setBillingFormAddress(initialBillingAddressData)
-    setCardFormDetails(initialCardFormData)
-  }
-
-  const handleCardFormValidDetails = (isValid: boolean) => {
-    setCardFormDetails({ ...cardFormDetails, isCardDetailsValidated: isValid })
   }
 
   const handleBillingFormValidDetails = (isValid: boolean) => {
     setBillingFormAddress({ ...billingFormAddress, isAddressValid: isValid })
   }
 
-  const handleAddPaymentMethod = () => {
-    setBillingFormAddress(initialBillingAddressData)
-    setIsAddingNewPayment(true)
-  }
-
-  // Sets validateForm to true to get the card and billing details
-  const handleSaveNewPaymentMethod = async () => {
-    setValidateForm(true)
-  }
-
-  const saveCardDataToOrder = async () => {
-    let paymentAction: PaymentActionInput = {}
-
-    const selectedPaymentMethod = savedPaymentBillingDetails.find(
-      (each) => each?.cardInfo?.id === selectedPaymentBillingRadio
-    )
-
-    if (newPaymentMethod === PaymentType.CREDITCARD) {
-      const {
-        cardType,
-        expireMonth,
-        expireYear,
-        isCardInfoSaved,
-        paymentType,
-        cardNumberPart,
-        id,
-        cardholderName,
-      } = cardGetters.getCardDetails(selectedPaymentMethod?.cardInfo as SavedCard)
-
-      if (!isCVVAddedForNewPayment) {
-        await handleTokenization({
-          id,
-          cardType,
-          cvv,
-          cardNumber: cardNumberPart,
-          cardholderName,
-        })
-      }
-
-      const cardDetails: CardTypeForCheckout = {
-        cardType,
-        expireMonth,
-        expireYear,
-        isCardInfoSaved,
-        paymentType,
-        paymentWorkflow: PaymentWorkflow.MOZU,
-      }
-
-      const tokenizedData: TokenizedCard = {
-        id,
-        numberPart: cardNumberPart,
-      }
-
-      const isSameAsShipping = addressGetters.getIsBillingShippingAddressSame(
-        selectedPaymentMethod?.billingAddressInfo
-      )
-
-      paymentAction = buildCardPaymentActionForCheckoutParams(
-        CurrencyCode.US,
-        checkout,
-        cardDetails,
-        tokenizedData,
-        selectedPaymentMethod?.billingAddressInfo?.contact as CrContact,
-        isSameAsShipping
-      )
-
-      const paymentsWithNewStatus = orderGetters.getSelectedPaymentMethods(
-        checkout,
-        PaymentType.CREDITCARD
-      )
-
-      if (
-        paymentsWithNewStatus?.billingInfo?.card?.paymentServiceCardId ===
-        selectedPaymentBillingRadio
-      ) {
-        setStepStatusComplete()
-        setStepNext()
-        return
-      }
-
-      if (paymentsWithNewStatus) {
-        const card = paymentsWithNewStatus?.billingInfo?.card
-        cardDetails.cardType = card?.paymentOrCardType as string
-        cardDetails.expireMonth = card?.expireMonth as number
-        cardDetails.expireYear = card?.expireYear as number
-        cardDetails.paymentType = paymentsWithNewStatus?.paymentType as string
-
-        let paymentActionToBeVoided = buildCardPaymentActionForCheckoutParams(
-          CurrencyCode.US,
-          checkout,
-          cardDetails,
-          tokenizedData,
-          paymentsWithNewStatus?.billingInfo?.billingContact as CrContact,
-          isSameAsShipping
-        )
-
-        paymentActionToBeVoided = { ...paymentActionToBeVoided, actionName: 'VoidPayment' }
-        await onVoidPayment(
-          checkout?.id as string,
-          paymentsWithNewStatus?.id as string,
-          paymentActionToBeVoided
-        )
-      }
-
-      if (checkout?.id) {
-        paymentAction = { ...paymentAction, actionName: '' }
-        await onAddPayment(checkout.id, paymentAction)
-        setStepStatusComplete()
-        setStepNext()
+  const handleSameAsShippingAddressCheckbox = (value: boolean) => {
+    let address = initialBillingAddressData
+    if (value) {
+      address = {
+        contact: (checkout as CrOrder)?.fulfillmentInfo?.fulfillmentContact as ContactForm,
+        isSameBillingShippingAddress: value,
       }
     }
+
+    setBillingFormAddress({
+      ...address,
+      isAddressValid: false,
+    })
   }
 
-  const handleTokenization = async (card: CardForm) => {
-    const { publicRuntimeConfig } = getConfig()
-    const pciHost = publicRuntimeConfig?.pciHost
-    const apiHost = publicRuntimeConfig?.apiHost as string
-    const tokenizedCardResponse: TokenizedCard = await tokenizeCreditCardPayment(
-      card,
-      pciHost,
-      apiHost
-    )
-
-    if (!tokenizedCardResponse) return
-
+  const cancelAddingNewPaymentMethod = () => {
     setIsAddingNewPayment(false)
+    // setNewPaymentMethod('')
+    setBillingFormAddress(initialBillingAddressData)
+    // setCardFormDetails(initialCardFormData)
+  }
 
-    setSavedPaymentBillingDetails([
-      ...savedPaymentBillingDetails,
-      {
-        cardInfo: {
-          id: tokenizedCardResponse.id,
-          cardNumberPart: tokenizedCardResponse.numberPart,
-          paymentType: newPaymentMethod,
-          expireMonth: card.expireMonth,
-          expireYear: card.expireYear,
-          isCardInfoSaved: card.isCardInfoSaved,
-          cardType: card.cardType,
-        },
-        billingAddressInfo: {
-          ...billingFormAddress,
-          isSameBillingShippingAddress: billingFormAddress.isSameBillingShippingAddress,
-        },
-      },
-    ])
-
-    setSelectedPaymentBillingRadio(tokenizedCardResponse.id as string)
-    setValidateForm(false)
-    setIsCVVAddedForNewPayment(true)
+  const handleSaveNewPaymentMethod = async () => {
+    setValidateForm(true)
   }
 
   const handleInitialCardDetailsLoad = () => {
     setStepStatusIncomplete()
 
+    if (!cardCollection || !addressCollection) return
+
     // get card and billing address formatted data from server
     const accountPaymentDetails =
-      userGetters.getSavedCardsAndBillingDetails(
-        customerCardsCollection,
-        customerContactsCollection
-      ) || []
+      userGetters.getSavedCardsAndBillingDetails(cardCollection, addressCollection) || []
+
+    // find default payment details from server data
+    const defaultCard = userGetters.getDefaultPaymentBillingMethod(accountPaymentDetails)
 
     // get previously saved checkout payments
-    const checkoutPaymentWithNewStatus = orderGetters.getSelectedPaymentMethods(
-      checkout,
-      PaymentType.CREDITCARD
-    )
+    const checkoutPaymentWithNewStatus = orderGetters.getSelectedPaymentType(checkout)
 
     // if checkoutPayment details are not present in accountPaymentDetails, push it and set it as selected radio
-    if (checkoutPaymentWithNewStatus) {
+    if (checkoutPaymentWithNewStatus?.paymentType === PaymentType.CREDITCARD) {
       const cardDetails = checkoutPaymentWithNewStatus?.billingInfo?.card
       const billingAddress = checkoutPaymentWithNewStatus?.billingInfo?.billingContact
       Boolean(
@@ -582,20 +443,16 @@ const PaymentStep = (props: PaymentStepProps) => {
           },
         })
 
-      setSelectedPaymentBillingRadio(cardDetails?.paymentServiceCardId as string)
+      setSelectedCardRadio(cardDetails?.paymentServiceCardId as string)
+    } else {
+      // if defaultCard is available, set as selected radio
+      cardGetters.getCardId(defaultCard?.cardInfo) &&
+        selectedCardRadio === '' &&
+        setSelectedCardRadio(defaultCard.cardInfo?.id as string)
     }
 
-    // find default payment details from server data
-    const defaultCard = userGetters.getDefaultPaymentBillingMethod(accountPaymentDetails)
-
-    // if defaultCard is available, set as selected radio
-    cardGetters.getCardId(defaultCard?.cardInfo) &&
-      selectedPaymentBillingRadio === '' &&
-      setSelectedPaymentBillingRadio(defaultCard.cardInfo?.id as string)
-
     if (accountPaymentDetails?.length) {
-      setSavedPaymentBillingDetails(accountPaymentDetails)
-      setNewPaymentMethod(PaymentType.CREDITCARD)
+      setCardOptions(accountPaymentDetails)
     }
   }
 
@@ -653,27 +510,33 @@ const PaymentStep = (props: PaymentStepProps) => {
 
   const handlePurchaseOrderValidation = async (purchaseOrderFormData: any) => {
     setIsAddingNewPayment(false)
-    setSavedPaymentBillingDetailsForPurchaseOrder({
-      purchaseOrder: {
-        purchaseOrderNumber: purchaseOrderFormData?.purchaseOrderNumber,
-        paymentTerm: purchaseOrderFormData?.paymentTerm,
-      },
-      billingAddressInfo: {
-        ...billingFormAddress,
-        isSameBillingShippingAddress: billingFormAddress.isSameBillingShippingAddress,
-      },
-    })
+    // setSavedPaymentBillingDetailsForPurchaseOrder({
+    //   purchaseOrder: {
+    //     purchaseOrderNumber: purchaseOrderFormData?.purchaseOrderNumber,
+    //     paymentTerm: purchaseOrderFormData?.paymentTerm,
+    //   },
+    //   billingAddressInfo: {
+    //     ...billingFormAddress,
+    //     isSameBillingShippingAddress: billingFormAddress.isSameBillingShippingAddress,
+    //   },
+    // })
     setValidateForm(false)
   }
 
   const handleValidateBillingAddress = async (address: CuAddress) => {
     try {
-      await validateCustomerAddress.mutateAsync({
-        addressValidationRequestInput: {
-          address,
-        },
-      })
+      // if (!allowInvalidAddresses && address?.countryCode === CountryCode.US) {
+      //   await validateCustomerAddress.mutateAsync({
+      //     addressValidationRequestInput: {
+      //       address,
+      //     },
+      //   })
+      // }
+
+      // selectedPaymentTypeRadio === PaymentType.CREDITCARD &&
       handleTokenization({ ...cardFormDetails })
+      // selectedPaymentTypeRadio === PaymentType.PURCHASEORDER &&
+      //   handlePurchaseOrderValidation({ ...purchaseOrderFormDetails })
     } catch (error) {
       setValidateForm(false)
       console.error(error)
@@ -795,55 +658,55 @@ const PaymentStep = (props: PaymentStepProps) => {
     }
   }
 
-  const getPurchaseOrderPaymentAction = () => {
-    let paymentActionToBeAdded: PaymentActionInput = {}
-    let paymentActionToBeVoided: PaymentActionInput = {}
+  // const getPurchaseOrderPaymentAction = () => {
+  //   let paymentActionToBeAdded: PaymentActionInput = {}
+  //   let paymentActionToBeVoided: PaymentActionInput = {}
 
-    const isSameAsShipping = addressGetters.getIsBillingShippingAddressSame(
-      savedPaymentBillingDetailsForPurchaseOrder?.billingAddressInfo
-    )
-    const purchaseOrderData = savedPaymentBillingDetailsForPurchaseOrder?.purchaseOrder ?? {}
+  //   const isSameAsShipping = addressGetters.getIsBillingShippingAddressSame(
+  //     savedPaymentBillingDetailsForPurchaseOrder?.billingAddressInfo
+  //   )
+  //   const purchaseOrderData = savedPaymentBillingDetailsForPurchaseOrder?.purchaseOrder ?? {}
 
-    const paymentWithNewStatus = orderGetters.getSelectedPaymentType(checkout)
+  //   const paymentWithNewStatus = orderGetters.getSelectedPaymentType(checkout)
 
-    if (paymentWithNewStatus?.paymentType === PaymentType.PURCHASEORDER) {
-      const purchaseOrderDataWithNewStatus = {
-        purchaseOrderNumber: paymentWithNewStatus?.billingInfo?.purchaseOrder?.purchaseOrderNumber,
-        purchaseOrderPaymentTerms: paymentWithNewStatus?.billingInfo?.purchaseOrder?.paymentTerm,
-      }
+  //   if (paymentWithNewStatus?.paymentType === PaymentType.PURCHASEORDER) {
+  //     const purchaseOrderDataWithNewStatus = {
+  //       purchaseOrderNumber: paymentWithNewStatus?.billingInfo?.purchaseOrder?.purchaseOrderNumber,
+  //       purchaseOrderPaymentTerms: paymentWithNewStatus?.billingInfo?.purchaseOrder?.paymentTerm,
+  //     }
 
-      paymentActionToBeVoided = buildPurchaseOrderPaymentActionForCheckoutParams(
-        CurrencyCode.US,
-        checkout,
-        purchaseOrderDataWithNewStatus,
-        paymentWithNewStatus?.billingInfo?.billingContact as CrContact,
-        isSameAsShipping
-      )
+  //     paymentActionToBeVoided = buildPurchaseOrderPaymentActionForCheckoutParams(
+  //       CurrencyCode.US,
+  //       checkout,
+  //       purchaseOrderDataWithNewStatus,
+  //       paymentWithNewStatus?.billingInfo?.billingContact as CrContact,
+  //       isSameAsShipping
+  //     )
 
-      paymentActionToBeVoided = { ...paymentActionToBeVoided, actionName: 'VoidPayment' }
-    }
+  //     paymentActionToBeVoided = { ...paymentActionToBeVoided, actionName: 'VoidPayment' }
+  //   }
 
-    paymentActionToBeAdded = {
-      ...buildPurchaseOrderPaymentActionForCheckoutParams(
-        CurrencyCode.US,
-        checkout,
-        purchaseOrderData,
-        savedPaymentBillingDetailsForPurchaseOrder?.billingAddressInfo?.contact as CrContact,
-        isSameAsShipping
-      ),
-      actionName: '',
-    }
+  //   paymentActionToBeAdded = {
+  //     ...buildPurchaseOrderPaymentActionForCheckoutParams(
+  //       CurrencyCode.US,
+  //       checkout,
+  //       purchaseOrderData,
+  //       savedPaymentBillingDetailsForPurchaseOrder?.billingAddressInfo?.contact as CrContact,
+  //       isSameAsShipping
+  //     ),
+  //     actionName: '',
+  //   }
 
-    return {
-      paymentActionToBeAdded,
-      paymentActionToBeVoided,
-      paymentId: paymentWithNewStatus?.id as string,
-    }
-  }
+  //   return {
+  //     paymentActionToBeAdded,
+  //     paymentActionToBeVoided,
+  //     paymentId: paymentWithNewStatus?.id as string,
+  //   }
+  // }
 
   const handlePayment = async () => {
     const paymentMethodSelection: any = {
-      [PaymentType.PURCHASEORDER]: getPurchaseOrderPaymentAction,
+      // [PaymentType.PURCHASEORDER]: getPurchaseOrderPaymentAction,
       [PaymentType.CREDITCARD]: getCardPaymentAction,
     }
 
@@ -869,51 +732,50 @@ const PaymentStep = (props: PaymentStepProps) => {
   }
 
   useEffect(() => {
-    // handle saved payment methods in account
-    if ((isCustomerCardsSuccess && isCustomerContactsSuccess) || !isAuthenticated) {
+    if (selectedPaymentTypeRadio === PaymentType.CREDITCARD) {
       handleInitialCardDetailsLoad()
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCustomerCardsSuccess, isCustomerContactsSuccess, checkout])
+  }, [selectedPaymentTypeRadio])
 
   // when payment card and billing address info is available, handleTokenization
   useEffect(() => {
     if (
-      isAddingNewPayment &&
-      validateForm &&
-      cardFormDetails.cardNumber &&
-      billingFormAddress.contact.firstName
+      (cardFormDetails.isDataUpdated || purchaseOrderFormDetails.isPurchaseOrderFormValidated) &&
+      billingFormAddress.isDataUpdated
     ) {
       handleValidateBillingAddress({ ...billingFormAddress.contact.address })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    isAddingNewPayment,
-    validateForm,
-    cardFormDetails.cardNumber,
-    billingFormAddress.contact.firstName,
+    cardFormDetails.isDataUpdated,
+    billingFormAddress.isDataUpdated,
+    purchaseOrderFormDetails.isPurchaseOrderFormValidated,
   ])
-  // handling review order button status (enabled/disabled)
+
   useEffect(() => {
-    if (selectedPaymentBillingRadio) {
-      isAddingNewPayment || !cvv ? setStepStatusIncomplete() : setStepStatusValid()
-    } else {
-      setStepStatusIncomplete()
-    }
+    if (isAddingNewPayment || (!isCVVAddedForNewPayment && !isCvvValid)) setStepStatusIncomplete()
+    else setStepStatusValid()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPaymentBillingRadio, isAddingNewPayment])
+  }, [isCvvValid, isAddingNewPayment])
 
   useEffect(() => {
     if (stepStatus === STEP_STATUS.SUBMIT) {
-      reCaptchaKey ? submitFormWithRecaptcha() : saveCardDataToOrder()
+      if (reCaptchaKey) {
+        submitFormWithRecaptcha()
+      } else {
+        handlePayment()
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepStatus])
 
-  useEffect(() => {
-    isValid ? setStepStatusValid() : setStepStatusIncomplete()
-  }, [isValid])
+  const isAddPaymentMethodButtonDisabled = () => {
+    return !(
+      billingFormAddress.isAddressValid &&
+      (cardFormDetails.isCardDetailsValidated ||
+        purchaseOrderFormDetails.isPurchaseOrderFormValidated)
+    )
+  }
 
   return (
     <Stack data-testid="checkout-payment">
@@ -921,48 +783,144 @@ const PaymentStep = (props: PaymentStepProps) => {
         {t('payment-method')}
       </Typography>
 
-      {shouldShowPreviouslySavedPayments() && (
-        <>
-          <Stack gap={2} width="100%" data-testid="saved-payment-methods">
-            {savedPaymentBillingDetails?.length ? (
-              <>
-                <KiboRadio
-                  radioOptions={savedPaymentBillingDetails?.map((card) => {
-                    const address = addressGetters.getAddress(
-                      card?.billingAddressInfo?.contact.address as CrAddress
-                    )
-                    return {
-                      value: cardGetters.getCardId(card?.cardInfo),
-                      name: cardGetters.getCardId(card?.cardInfo),
-                      optionIndicator:
-                        defaultCustomerAccountCard.cardInfo?.id === card.cardInfo?.id
-                          ? t('primary')
-                          : '',
-                      label: (
-                        <>
-                          <PaymentBillingCard
-                            cardNumberPart={cardGetters.getCardNumberPart(card?.cardInfo)}
-                            expireMonth={cardGetters.getExpireMonth(card?.cardInfo)}
-                            expireYear={cardGetters.getExpireYear(card?.cardInfo)}
-                            cardType={cardGetters.getCardType(card?.cardInfo).toUpperCase()}
-                            address1={addressGetters.getAddress1(address)}
-                            address2={addressGetters.getAddress2(address)}
-                            cityOrTown={addressGetters.getCityOrTown(address)}
-                            postalOrZipCode={addressGetters.getPostalOrZipCode(address)}
-                            stateOrProvince={addressGetters.getStateOrProvince(address)}
+      <FormControl>
+        <RadioGroup
+          aria-labelledby="payment-types-radio"
+          aria-label="payment-types"
+          value={selectedPaymentTypeRadio}
+          onChange={(_, value: string) => handlePaymentTypeRadioChange(value)}
+          data-testid="payment-types"
+        >
+          {newPaymentTypes.map((paymentType: PaymentsType) => {
+            return (
+              <Box key={paymentType.id}>
+                <FormControlLabel
+                  sx={{ ...formControlLabelStyle }}
+                  value={paymentType.id}
+                  control={<Radio sx={{ ...radioStyle }} />}
+                  label={paymentType.name}
+                />
+                {paymentType.id === selectedPaymentTypeRadio ? (
+                  <Box sx={{ maxWidth: '100%', mb: 1, pl: 4 }}>
+                    {shouldShowPreviouslySavedCards ? (
+                      <Stack gap={2} width="100%" data-testid="saved-payment-methods">
+                        {cardOptions?.length ? (
+                          <>
+                            <KiboRadio
+                              radioOptions={cardOptions?.map((card) => {
+                                const address = addressGetters.getAddress(
+                                  card?.billingAddressInfo?.contact.address as CrAddress
+                                )
+                                return {
+                                  value: cardGetters.getCardId(card?.cardInfo),
+                                  name: cardGetters.getCardId(card?.cardInfo),
+                                  optionIndicator:
+                                    defaultCustomerAccountCard.cardInfo?.id === card.cardInfo?.id
+                                      ? t('primary')
+                                      : '',
+                                  label: (
+                                    <>
+                                      <PaymentBillingCard
+                                        cardNumberPart={cardGetters.getCardNumberPart(
+                                          card?.cardInfo
+                                        )}
+                                        expireMonth={cardGetters.getExpireMonth(card?.cardInfo)}
+                                        expireYear={cardGetters.getExpireYear(card?.cardInfo)}
+                                        cardType={cardGetters
+                                          .getCardType(card?.cardInfo)
+                                          ?.toUpperCase()}
+                                        address1={addressGetters.getAddress1(address)}
+                                        address2={addressGetters.getAddress2(address)}
+                                        cityOrTown={addressGetters.getCityOrTown(address)}
+                                        postalOrZipCode={addressGetters.getPostalOrZipCode(address)}
+                                        stateOrProvince={addressGetters.getStateOrProvince(address)}
+                                      />
+                                      {selectedCardRadio === card?.cardInfo?.id &&
+                                        !isCVVAddedForNewPayment && (
+                                          <Box pt={2} width={'50%'}>
+                                            <FormControl sx={{ width: '100%' }}>
+                                              <Controller
+                                                name="cvv"
+                                                control={control}
+                                                defaultValue={defaultCvv?.cvv}
+                                                render={({ field }) => {
+                                                  return (
+                                                    <KiboTextBox
+                                                      type="password"
+                                                      value={field.value || ''}
+                                                      label={t('security-code')}
+                                                      placeholder={t('security-code-placeholder')}
+                                                      required={true}
+                                                      onChange={(_, value) => {
+                                                        field.onChange(value)
+                                                        setCvv(value)
+                                                      }}
+                                                      onBlur={field.onBlur}
+                                                      error={!!errors?.cvv}
+                                                      helperText={
+                                                        errors?.cvv?.message as unknown as string
+                                                      }
+                                                      icon={
+                                                        <Box
+                                                          pr={1}
+                                                          pt={0.5}
+                                                          sx={{ cursor: 'pointer' }}
+                                                        >
+                                                          <Tooltip
+                                                            title={t('cvv-tooltip-text')}
+                                                            placement="top"
+                                                          >
+                                                            <Help color="disabled" />
+                                                          </Tooltip>
+                                                        </Box>
+                                                      }
+                                                    />
+                                                  )
+                                                }}
+                                              />
+                                            </FormControl>
+                                          </Box>
+                                        )}
+                                    </>
+                                  ),
+                                }
+                              })}
+                              selected={selectedCardRadio}
+                              align="flex-start"
+                              onChange={handleRadioSavedCardSelection}
+                            />
+                          </>
+                        ) : (
+                          <Typography variant="h4">
+                            {t('no-previously-saved-payment-methods')}
+                          </Typography>
+                        )}
+                      </Stack>
+                    ) : null}
+                    {shouldShowCardForm ? (
+                      <>
+                        <CardDetailsForm
+                          validateForm={validateForm}
+                          onSaveCardData={handleCardFormData}
+                          onFormStatusChange={handleCardFormValidDetails}
+                        />
+
+                        {isAuthenticated ? (
+                          <FormControlLabel
+                            sx={{
+                              width: '100%',
+                              paddingLeft: '0.5rem',
+                            }}
+                            control={
+                              <Checkbox
+                                onChange={handleSavePaymentMethodCheckbox}
+                                data-testid="save-payment"
+                              />
+                            }
+                            label={`${t('save-payment-method-checkbox')}`}
                           />
                         ) : null}
                       </>
-                    ) : null}
-                    {shouldShowPurchaseOrderForm ? (
-                      <PurchaseOrderForm
-                        creditLimit={creditLimit}
-                        availableBalance={availableBalance}
-                        validateForm={validateForm}
-                        purchaseOrderPaymentTerms={customerPurchaseOrderPaymentTerms}
-                        onSavePurchaseData={handlePurchaseOrderFormData}
-                        onFormStatusChange={handlePurchaseOrderFormValidDetails}
-                      />
                     ) : null}
                     {shouldShowBillingAddressForm ? (
                       <>
