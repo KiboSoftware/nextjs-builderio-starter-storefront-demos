@@ -150,6 +150,15 @@ const getOrderSummary = (order: CrOrder): OrderSummary => {
   }
 }
 
+const getSelectedPaymentType = (order?: CrOrder | Checkout, paymentType?: string): CrPayment => {
+  return order?.payments?.find((each) => {
+    if (paymentType) {
+      return each?.paymentType === paymentType && each?.status?.toLowerCase() === 'new'
+    }
+
+    return each?.status?.toLowerCase() === 'new'
+  }) as CrPayment
+}
 const getCheckoutDetails = (order: CrOrder): CheckoutDetails => {
   return {
     shipItems: getShipItems(order),
@@ -317,4 +326,5 @@ export const orderGetters = {
   getPaymentMethods,
   getOrderStatus,
   getFinalOrderPayment,
+  getSelectedPaymentType,
 }
