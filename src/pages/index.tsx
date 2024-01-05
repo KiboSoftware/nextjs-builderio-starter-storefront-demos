@@ -1,4 +1,5 @@
 import { BuilderComponent, builder, Builder } from '@builder.io/react'
+import '@builder.io/widgets'
 import getConfig from 'next/config'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 
