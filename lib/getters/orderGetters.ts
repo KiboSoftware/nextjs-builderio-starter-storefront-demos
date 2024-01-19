@@ -27,17 +27,62 @@ import type {
 } from '@/lib/gql/types'
 
 const getCheckoutItemCount = (order: CrOrder) => order?.items?.length
+
 const getEmail = (order: CrOrder) => order?.email
-const getTotal = (order: CrOrder | CrCart | Checkout): number => order?.total as number
+
+const getTotal = (order: CrOrder | CrCart | Checkout): number => (order?.total as number) || 0
+
+const getShippingSubTotal = (order: CrOrder | CrCart | Checkout) => order?.shippingSubTotal || 0
+
 const getShippingTotal = (order: CrOrder | CrCart) => order?.shippingTotal || 0
-const getTaxTotal = (order: CrOrder | CrCart) => order?.taxTotal || 0
-const getSubtotal = (order: CrOrder | CrCart): number => order?.subtotal as number
+const getShippingTaxTotal = (order: CrOrder | CrCart | Checkout) => order?.shippingTaxTotal || 0
+const getShippingDiscounts = (order: CrOrder) =>
+  order?.shippingDiscounts?.map((discount) => {
+    return {
+      id: discount?.discount?.discount?.id,
+      name: discount?.discount?.discount?.name,
+      impact: (discount?.discount?.impact as number) * -1,
+    }
+  })
+
+const getHandlingTotal = (order: CrOrder | CrCart | Checkout) => order?.handlingTotal || 0
+
+const getHandlingSubTotal = (order: CrOrder | CrCart | Checkout) => order?.handlingSubTotal || 0
+
+const getHandlingTaxTotal = (order: CrOrder | CrCart | Checkout) => order?.handlingTaxTotal || 0
+const getHandlingDiscounts = (order: CrOrder) =>
+  order?.handlingDiscounts?.map((discount) => {
+    return {
+      id: discount?.discount?.id,
+      name: discount?.discount?.name,
+      impact: (discount?.impact as number) * -1,
+    }
+  })
+const getTaxTotal = (order: CrOrder | CrCart) => (order?.taxTotal as number) || 0
+
+const getSubtotal = (order: CrOrder | CrCart | Checkout): number =>
+  ((order as Checkout)?.subTotal as number) ||
+  ((order as CrOrder | CrCart)?.subtotal as number) ||
+  0
 
 const getDiscountedSubtotal = (order: CrOrder | CrCart): number => {
   if (order?.discountedSubtotal && order?.discountedSubtotal != order?.subtotal)
     return order?.discountedSubtotal
   else return 0
 }
+
+const getOrderDiscounts = (order: CrOrder) =>
+  order?.orderDiscounts?.map((discount) => {
+    return {
+      id: discount?.discount?.id,
+      name: discount?.discount?.name,
+      impact: (discount?.impact as number) * -1,
+    }
+  })
+const getLineItemSubtotal = (order: CrOrder | CrCart) =>
+  (order?.lineItemSubtotalWithOrderAdjustments as number) || 0
+
+const getItemTaxTotal = (order: CrOrder | CrCart) => (order?.itemTaxTotal as number) || 0
 
 const getItemsByFulfillment = (order: CrOrder, fulfillmentMethod: string): CrOrderItem[] => {
   return (
@@ -51,6 +96,9 @@ const getPickupItems = (order: CrOrder): CrOrderItem[] => {
 }
 const getShipItems = (order: CrOrder): CrOrderItem[] =>
   getItemsByFulfillment(order, FulfillmentOptions.SHIP)
+
+const getDigitalItems = (order: CrOrder): CrOrderItem[] =>
+  getItemsByFulfillment(order, FulfillmentOptions.DIGITAL)
 
 const getCartItemId = (item: CrOrderItem | CrCartItem): string => item?.id || ''
 
@@ -108,6 +156,23 @@ const getPaymentMethods = (order: CrOrder) => {
     }) as PaymentMethod[]
 }
 
+const getPurchaseOrderPaymentMethods = (order: CrOrder) => {
+  const payments: CrPayment[] =
+    (order?.payments?.filter(
+      (payment) => payment?.status?.toLowerCase() === 'new'
+    ) as CrPayment[]) || []
+  if (!payments) return []
+
+  return payments
+    .filter((p: CrPayment) => p?.billingInfo?.purchaseOrder)
+    .map((item: CrPayment) => {
+      return {
+        purchaseOrderNumber: item?.billingInfo?.purchaseOrder?.purchaseOrderNumber,
+        paymentTerms: item?.billingInfo?.purchaseOrder?.paymentTerm?.code,
+      }
+    })
+}
+
 const getPersonalDetails = (order: CrOrder): CrContact => {
   return {
     email: getEmail(order),
@@ -128,7 +193,7 @@ const getShippingDetails = (order: CrOrder): ShippingDetails => {
 }
 
 const getBillingDetails = (order: CrOrder): BillingDetails => {
-  const activePayment = getSelectedPaymentMethods(order, PaymentType.CREDITCARD)
+  const activePayment = getSelectedPaymentType(order, PaymentType.CREDITCARD)
   const contact =
     order?.billingInfo?.billingContact || (activePayment?.billingInfo?.billingContact as CrContact)
   return {
@@ -153,18 +218,24 @@ const getCheckoutDetails = (order: CrOrder): CheckoutDetails => {
   return {
     shipItems: getShipItems(order),
     pickupItems: getPickupItems(order),
+    digitalItems: getDigitalItems(order),
     orderSummary: getOrderSummary(order),
     personalDetails: getPersonalDetails(order),
     shippingDetails: getShippingDetails(order),
     billingDetails: getBillingDetails(order),
     paymentMethods: getPaymentMethods(order),
+    purchaseOrderPaymentMethods: getPurchaseOrderPaymentMethods(order),
   }
 }
 
-const getSelectedPaymentMethods = (order?: CrOrder | Checkout, paymentType?: string) => {
-  return order?.payments?.find(
-    (each) => each?.paymentType === paymentType && each?.status?.toLowerCase() === 'new'
-  )
+const getSelectedPaymentType = (order?: CrOrder | Checkout, paymentType?: string): CrPayment => {
+  return order?.payments?.find((each) => {
+    if (paymentType) {
+      return each?.paymentType === paymentType && each?.status?.toLowerCase() === 'new'
+    }
+
+    return each?.status?.toLowerCase() === 'new'
+  }) as CrPayment
 }
 
 const getId = (order: CrOrder) => order.id as string
@@ -204,6 +275,14 @@ const getOrderPaymentCardDetails = (card: CrPaymentCard) => {
     expireMonth: cardGetters.getExpireMonth(card),
     expireYear: cardGetters.getExpireYear(card),
     cardType: cardGetters.getCardType(card),
+    isCardInfoSaved: card?.isCardInfoSaved,
+  }
+}
+
+const getOrderPurchaseOrderDetails = (purchaseOrder: any) => {
+  return {
+    purchaseOrderNumber: purchaseOrder?.purchaseOrderNumber,
+    paymentTerm: purchaseOrder?.paymentTerm,
   }
 }
 
@@ -299,9 +378,12 @@ export const orderGetters = {
   getEmail,
   getTotal,
   getShippingTotal,
+  getShippingSubTotal,
+  getShippingTaxTotal,
   getTaxTotal,
   getSubtotal,
   getDiscountedSubtotal,
+  getOrderDiscounts,
   getPickupItems,
   getShipItems,
   getCartItemId,
@@ -310,10 +392,19 @@ export const orderGetters = {
   getFulfillmentLocationCodes,
   getCheckoutDetails,
   getShippingContact,
-  getSelectedPaymentMethods,
+  getSelectedPaymentType,
   getShippingMethodCode,
   getLocationCode,
   getPaymentMethods,
   getOrderStatus,
   getFinalOrderPayment,
+  getOrderPurchaseOrderDetails,
+  getHandlingTotal,
+  getHandlingSubTotal,
+  getHandlingTaxTotal,
+  getHandlingDiscounts,
+  getLineItemSubtotal,
+  getShippingDiscounts,
+  getItemTaxTotal,
+  getDigitalItems,
 }

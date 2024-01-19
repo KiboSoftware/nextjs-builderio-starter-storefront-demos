@@ -1,7 +1,17 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useRef, useState } from 'react'
 
-import { Stack, Button, Typography, Grid, Box, FormControlLabel, Checkbox } from '@mui/material'
+import {
+  Stack,
+  Button,
+  Typography,
+  Grid,
+  Box,
+  FormControlLabel,
+  Checkbox,
+  NoSsr,
+} from '@mui/material'
+import getConfig from 'next/config'
 import { useTranslation } from 'next-i18next'
 
 import { ShippingMethod } from '@/components/checkout'
@@ -13,9 +23,9 @@ import {
   useValidateCustomerAddress,
   useCreateCustomerAddress,
 } from '@/hooks'
-import { DefaultId, AddressType } from '@/lib/constants'
+import { DefaultId, AddressType, CountryCode, FulfillmentOptions } from '@/lib/constants'
 import { orderGetters, userGetters } from '@/lib/getters'
-import { buildAddressParams } from '@/lib/helpers'
+import { actions, buildAddressParams, hasPermission } from '@/lib/helpers'
 import { Address } from '@/lib/types'
 
 import type {
@@ -35,9 +45,13 @@ interface ShippingProps {
 
 const StandardShippingStep = (props: ShippingProps) => {
   const { checkout, savedUserAddressData: addresses, isAuthenticated } = props
+
   // Use this to submit the form with reCaptcha: Don't delete this code
   // const { executeRecaptcha } = useReCaptcha()
   // const { showSnackbar } = useSnackbarContext()
+  const { publicRuntimeConfig } = getConfig()
+  const allowInvalidAddresses = publicRuntimeConfig.allowInvalidAddresses
+
   const { user } = useAuthContext()
   const checkoutShippingContact = orderGetters.getShippingContact(checkout)
   const checkoutShippingMethodCode = orderGetters.getShippingMethodCode(checkout)
@@ -50,6 +64,7 @@ const StandardShippingStep = (props: ShippingProps) => {
   }
   const shipItems = orderGetters.getShipItems(checkout)
   const pickupItems = orderGetters.getPickupItems(checkout)
+  const digitalItems = orderGetters.getDigitalItems(checkout)
 
   const [isAddressSavedToAccount, setIsAddressSavedToAccount] = useState<boolean>(false)
   const [validateForm, setValidateForm] = useState<boolean>(false)
@@ -116,21 +131,28 @@ const StandardShippingStep = (props: ShippingProps) => {
       addressType: AddressType.SHIPPING,
     })
 
-    await createCustomerAddress.mutateAsync(params)
-    setIsAddressSavedToAccount(false)
+    return createCustomerAddress.mutateAsync(params)
   }
 
   const handleSaveAddressToCheckout = async ({ contact }: { contact: CrContact }) => {
     try {
-      await validateCustomerAddress.mutateAsync({
-        addressValidationRequestInput: { address: contact?.address as CuAddress },
-      })
-      if (isAddressSavedToAccount) {
-        await handleSaveAddressToAccount(contact)
+      if (!allowInvalidAddresses && contact?.address?.countryCode === CountryCode.US) {
+        await validateCustomerAddress.mutateAsync({
+          addressValidationRequestInput: { address: contact?.address as CuAddress },
+        })
       }
-      await updateOrderShippingInfo.mutateAsync({ checkout, contact })
+
+      if (isAddressSavedToAccount) {
+        const customerSavedAddress = await handleSaveAddressToAccount(contact)
+        const { accountId: _, types: __, ...customerContact } = customerSavedAddress
+        await updateOrderShippingInfo.mutateAsync({ checkout, contact: customerContact })
+        setSelectedShippingAddressId(customerSavedAddress?.id as number)
+      } else {
+        await updateOrderShippingInfo.mutateAsync({ checkout, contact })
+        setSelectedShippingAddressId((contact?.id as number) || DefaultId.ADDRESSID)
+      }
+      setIsAddressSavedToAccount(false)
       setCheckoutId(checkout?.id)
-      setSelectedShippingAddressId((contact?.id as number) || DefaultId.ADDRESSID)
       setShouldShowAddAddressButton(true)
       setValidateForm(false)
       setIsNewAddressAdded(true)
@@ -243,15 +265,57 @@ const StandardShippingStep = (props: ShippingProps) => {
   }, [stepStatus])
 
   useEffect(() => {
-    selectedShippingAddressId && checkoutShippingMethodCode && shouldShowAddAddressButton
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;(selectedShippingAddressId && checkoutShippingMethodCode && shouldShowAddAddressButton) ||
+    (!shipItems.length && (pickupItems.length || digitalItems.length))
       ? setStepStatusValid()
       : setStepStatusIncomplete()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedShippingAddressId, checkout, shouldShowAddAddressButton])
 
+  const isAllItemsDigital = checkout.items?.every(
+    (item) => item?.fulfillmentMethod === FulfillmentOptions.DIGITAL
+  )
+
+  const handleDigitalProductShipping = async () => {
+    const address = {
+      addressType: 'Residential',
+      countryCode: 'US',
+      isValidated: false,
+      postalOrZipCode: 'n/a',
+      stateOrProvince: 'n/a',
+      cityOrTown: 'n/a',
+      address1: 'n/a',
+    }
+
+    await updateOrderShippingInfo.mutateAsync({
+      checkout,
+      contact: {
+        address,
+        firstName: '',
+        lastNameOrSurname: '',
+        phoneNumbers: { home: '' },
+      },
+    })
+
+    setStepStatusValid()
+  }
+
+  console.log('checkoutttt', checkout.email)
+
   useEffect(() => {
-    if (!shipItems.length) setStepStatusValid()
-  }, [shipItems.length])
+    console.log('checkoutttt useeffect', checkout.email)
+    if (isAllItemsDigital || !shipItems.length)
+      if (isAllItemsDigital) {
+        handleDigitalProductShipping()
+      } else {
+        setStepStatusValid()
+      }
+  }, [checkout.email, isAllItemsDigital, shipItems.length])
+
+  if (checkout.items?.every((item) => item?.fulfillmentMethod === FulfillmentOptions.DIGITAL)) {
+    return <Typography variant="h4">{t('digital-products-shipping-text')}</Typography>
+  }
 
   if (!shipItems.length) {
     return (
@@ -348,15 +412,18 @@ const StandardShippingStep = (props: ShippingProps) => {
                 />
               </>
             )}
-
-            <Button
-              variant="contained"
-              color="inherit"
-              sx={{ width: { xs: '100%', sm: '50%' } }}
-              onClick={handleAddNewAddress}
-            >
-              {t('add-new-address')}
-            </Button>
+            <NoSsr>
+              {hasPermission(actions.CREATE_CONTACTS) && (
+                <Button
+                  variant="contained"
+                  color="inherit"
+                  sx={{ width: { xs: '100%', sm: '50%' } }}
+                  onClick={handleAddNewAddress}
+                >
+                  {t('add-new-address')}
+                </Button>
+              )}
+            </NoSsr>
           </Stack>
           {shippingMethods.length > 0 && (
             <ShippingMethod

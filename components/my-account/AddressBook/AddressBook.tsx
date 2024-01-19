@@ -13,6 +13,7 @@ import {
   MenuItem,
   Grid,
   Collapse,
+  NoSsr,
 } from '@mui/material'
 import getConfig from 'next/config'
 import { useTranslation } from 'next-i18next'
@@ -28,9 +29,9 @@ import {
   useDeleteCustomerAddress,
   useValidateCustomerAddress,
 } from '@/hooks'
-import { AddressType } from '@/lib/constants'
+import { AddressType, CountryCode } from '@/lib/constants'
 import { userGetters } from '@/lib/getters'
-import { buildAddressParams, validateGoogleReCaptcha } from '@/lib/helpers'
+import { actions, buildAddressParams, hasPermission, validateGoogleReCaptcha } from '@/lib/helpers'
 import type { Address, ContactForm, DeleteAddressParams } from '@/lib/types'
 
 import type { UpdateCustomerAccountContactDetailsParams } from '@/hooks'
@@ -103,25 +104,29 @@ const AccountAddress = (props: AccountAddressProps) => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <AddressCard {...buildAddressProps(customerContact)} />
         <Stack>
-          <Typography
-            variant="body2"
-            sx={{ cursor: 'pointer' }}
-            onClick={() => editAddress(customerContact)}
-            data-testid={`address-edit`}
-          >
-            {t('edit')}
-          </Typography>
-          {!isPrimaryAddress && (
-            <Delete
-              sx={{ marginTop: '1.375rem' }}
-              onClick={() =>
-                deleteAddress({
-                  accountId: customerContact?.accountId,
-                  contactId: customerContact?.id as number,
-                })
-              }
-            />
-          )}
+          <NoSsr>
+            {hasPermission(actions.EDIT_CONTACTS) && (
+              <Typography
+                variant="body2"
+                sx={{ cursor: 'pointer' }}
+                onClick={() => editAddress(customerContact)}
+                data-testid={`address-edit`}
+              >
+                {t('edit')}
+              </Typography>
+            )}
+            {hasPermission(actions.DELETE_CONTACTS) && !isPrimaryAddress && (
+              <Delete
+                sx={{ marginTop: '1.375rem' }}
+                onClick={() =>
+                  deleteAddress({
+                    accountId: customerContact?.accountId,
+                    contactId: customerContact?.id as number,
+                  })
+                }
+              />
+            )}
+          </NoSsr>
         </Stack>
       </Box>
       <Divider sx={{ marginTop: '1.75rem', marginBottom: '0.25rem' }} />
@@ -136,9 +141,12 @@ const AddressBook = (props: AddressBookProps) => {
   const shippingAddressPageSize = publicRuntimeConfig.shippingAddressPageSize
   const billingAddressPageSize = publicRuntimeConfig.billingAddressPageSize
   const reCaptchaKey = publicRuntimeConfig.recaptcha.reCaptchaKey
+  const allowInvalidAddresses = publicRuntimeConfig.allowInvalidAddresses
+
   const [isAddressModified, setIsAddressModified] = useState<boolean>(false)
   const [validateForm, setValidateForm] = useState<boolean>(false)
   const [isDefaultAddress, setIsDefaultAddress] = useState<boolean>(false)
+  const [saveAsShippingBillingCheckbox, setSaveAsShippingBillingCheckbox] = useState<boolean>(false)
   const [editAddress, setEditAddress] = useState<CustomerContact>()
   const [addressType, setAddressType] = useState<string>(AddressType.SHIPPING)
 
@@ -228,14 +236,27 @@ const AddressBook = (props: AddressBookProps) => {
     })
 
     try {
-      await validateCustomerAddress.mutateAsync({
-        addressValidationRequestInput: { address: address?.contact?.address as CuAddress },
-      })
+      if (!allowInvalidAddresses && address?.contact?.address?.countryCode === CountryCode.US) {
+        await validateCustomerAddress.mutateAsync({
+          addressValidationRequestInput: { address: address?.contact?.address as CuAddress },
+        })
+      }
+
       if (address?.contact?.id) {
         await updateCustomerAddress.mutateAsync(params as UpdateCustomerAccountContactDetailsParams)
         setIsAddressModified(false)
       } else {
         await createCustomerAddress.mutateAsync(params)
+        if (saveAsShippingBillingCheckbox) {
+          const addressParam = buildAddressParams({
+            accountId: user?.id,
+            address,
+            isDefaultAddress,
+            addressType:
+              addressType === AddressType.SHIPPING ? AddressType.BILLING : AddressType.SHIPPING,
+          })
+          await createCustomerAddress.mutateAsync(addressParam)
+        }
         setIsAddressModified(false)
       }
 
@@ -319,112 +340,147 @@ const AddressBook = (props: AddressBookProps) => {
   return (
     <Box data-testid={'address-book-component'}>
       <Box pb={2}>
-        {!isAddressModified &&
-          !displayShippingAddresses?.length &&
-          !displayBillingAddresses?.length && (
-            <Typography variant="body1">{t('no-saved-addresses-yet')}</Typography>
-          )}
+        <NoSsr>
+          {hasPermission(actions.VIEW_CONTACTS) &&
+            !isAddressModified &&
+            !displayShippingAddresses?.length &&
+            !displayBillingAddresses?.length && (
+              <Typography variant="body1">{t('no-saved-addresses-yet')}</Typography>
+            )}
+        </NoSsr>
       </Box>
-      {!isAddressModified && (
-        <Box>
-          <TransitionGroup>
-            {displayShippingAddresses?.map((item: CustomerContact, index: number) => (
-              <Collapse
-                key={`${item?.id}address`}
-                sx={{
-                  '.MuiCollapse-wrapperInner': {
-                    width: '100%',
-                  },
-                }}
-              >
-                <Box paddingY={1}>
-                  <AccountAddress
-                    customerContact={item}
-                    isPrimaryAddress={index === 0}
-                    addressType={AddressType.SHIPPING}
-                    editAddress={handleEditAddress}
-                    deleteAddress={handleConfirmDeleteAddress}
+      <NoSsr>
+        {!hasPermission(actions.VIEW_CONTACTS) && (
+          <Typography variant="body1">{t('not-authorized-shipping-information')}</Typography>
+        )}
+      </NoSsr>
+      <NoSsr>
+        {hasPermission(actions.VIEW_CONTACTS) && !isAddressModified && (
+          <Box>
+            <TransitionGroup>
+              {displayShippingAddresses?.map((item: CustomerContact, index: number) => (
+                <Collapse
+                  key={`${item?.id}address`}
+                  sx={{
+                    '.MuiCollapse-wrapperInner': {
+                      width: '100%',
+                    },
+                  }}
+                >
+                  <Box paddingY={1}>
+                    <AccountAddress
+                      customerContact={item}
+                      isPrimaryAddress={index === 0}
+                      addressType={AddressType.SHIPPING}
+                      editAddress={handleEditAddress}
+                      deleteAddress={handleConfirmDeleteAddress}
+                    />
+                  </Box>
+                </Collapse>
+              ))}
+              {displayShippingAddresses?.length > 0 && shippingAddresses.length > 5 && (
+                <Box display={'flex'} justifyContent={'center'} width="100%" py={10}>
+                  <KiboPagination
+                    count={Math.ceil(shippingAddresses?.length / shippingAddressPageSize)}
+                    startIndex={shippingAddressStartIndex}
+                    pageSize={shippingAddressPageSize}
+                    onPaginationChange={handleShippingAddressPagination}
                   />
                 </Box>
-              </Collapse>
-            ))}
-            {displayShippingAddresses?.length > 0 && shippingAddresses.length > 5 && (
-              <Box display={'flex'} justifyContent={'center'} width="100%" py={10}>
-                <KiboPagination
-                  count={Math.ceil(shippingAddresses?.length / shippingAddressPageSize)}
-                  startIndex={shippingAddressStartIndex}
-                  pageSize={shippingAddressPageSize}
-                  onPaginationChange={handleShippingAddressPagination}
-                />
-              </Box>
-            )}
-            {displayBillingAddresses?.map((item: CustomerContact, index: number) => (
-              <Collapse
-                key={`${item?.id}address`}
-                sx={{
-                  '.MuiCollapse-wrapperInner': {
-                    width: '100%',
-                  },
-                }}
-              >
-                <Box paddingY={1}>
-                  <AccountAddress
-                    customerContact={item}
-                    isPrimaryAddress={index === 0}
-                    addressType={AddressType.BILLING}
-                    editAddress={handleEditAddress}
-                    deleteAddress={handleConfirmDeleteAddress}
+              )}
+              {displayBillingAddresses?.map((item: CustomerContact, index: number) => (
+                <Collapse
+                  key={`${item?.id}address`}
+                  sx={{
+                    '.MuiCollapse-wrapperInner': {
+                      width: '100%',
+                    },
+                  }}
+                >
+                  <Box paddingY={1}>
+                    <AccountAddress
+                      customerContact={item}
+                      isPrimaryAddress={index === 0}
+                      addressType={AddressType.BILLING}
+                      editAddress={handleEditAddress}
+                      deleteAddress={handleConfirmDeleteAddress}
+                    />
+                  </Box>
+                </Collapse>
+              ))}
+              {displayBillingAddresses?.length > 0 && billingAddresses?.length > 5 && (
+                <Box display={'flex'} justifyContent={'center'} width="100%" py={10}>
+                  <KiboPagination
+                    count={Math.ceil(billingAddresses?.length / billingAddressPageSize)}
+                    startIndex={billingAddressStartIndex}
+                    pageSize={billingAddressPageSize}
+                    onPaginationChange={handleBillingAddressPagination}
                   />
                 </Box>
-              </Collapse>
-            ))}
-            {displayBillingAddresses?.length > 0 && billingAddresses?.length > 5 && (
-              <Box display={'flex'} justifyContent={'center'} width="100%" py={10}>
-                <KiboPagination
-                  count={Math.ceil(billingAddresses?.length / billingAddressPageSize)}
-                  startIndex={billingAddressStartIndex}
-                  pageSize={billingAddressPageSize}
-                  onPaginationChange={handleBillingAddressPagination}
-                />
-              </Box>
-            )}
-          </TransitionGroup>
-        </Box>
-      )}
-      {!isAddressModified && (
-        <Button
-          variant="contained"
-          color="inherit"
-          sx={{ ...styles.addNewAddressButtonStyle }}
-          onClick={handleNewAddress}
-          fullWidth
-          startIcon={<AddCircleOutlineIcon />}
-        >
-          {t('add-new-address')}
-        </Button>
-      )}
-
+              )}
+            </TransitionGroup>
+          </Box>
+        )}
+      </NoSsr>
+      <NoSsr>
+        {hasPermission(actions.CREATE_CONTACTS) && !isAddressModified && (
+          <Button
+            variant="contained"
+            color="inherit"
+            sx={{ ...styles.addNewAddressButtonStyle }}
+            onClick={handleNewAddress}
+            fullWidth
+            startIcon={<AddCircleOutlineIcon />}
+          >
+            {t('add-new-address')}
+          </Button>
+        )}
+      </NoSsr>
       {isAddressModified && (
         <Box pb={'1.813rem'}>
-          <Grid item xs={12} md={6} pl={1} pb={2.5} pr={6.5}>
-            <KiboSelect
-              name="address-type"
-              sx={{ typography: 'body2', width: '100%' }}
-              value={addressType}
-              onChange={(_name, value) => setAddressType(value)}
-            >
-              {Object.values(AddressType).map((addressTypeValue: string) => (
-                <MenuItem
-                  sx={{ typography: 'body2' }}
-                  key={addressTypeValue}
-                  value={addressTypeValue}
+          <Box m={1}>
+            <Grid container rowSpacing={1} columnSpacing={{ md: 3 }}>
+              <Grid item xs={12} md={6} pb={2}>
+                <KiboSelect
+                  name="address-type"
+                  sx={{ typography: 'body2', width: '100%' }}
+                  value={addressType}
+                  onChange={(_name, value) => setAddressType(value)}
                 >
-                  {addressTypeValue}
-                </MenuItem>
-              ))}
-            </KiboSelect>
-          </Grid>
-
+                  {Object.values(AddressType).map((addressTypeValue: string) => (
+                    <MenuItem
+                      sx={{ typography: 'body2' }}
+                      key={addressTypeValue}
+                      value={addressTypeValue}
+                    >
+                      {addressTypeValue}
+                    </MenuItem>
+                  ))}
+                </KiboSelect>
+              </Grid>
+              <Grid item xs={12} md={6} pb={2}>
+                <Box>
+                  {!editAddress && (
+                    <FormControlLabel
+                      label={t('shipping-billing-addresses-are-same')}
+                      control={
+                        <Checkbox
+                          sx={{ marginLeft: '0.5rem' }}
+                          inputProps={{
+                            'aria-label': t('shipping-billing-addresses-are-same'),
+                          }}
+                          checked={saveAsShippingBillingCheckbox}
+                          onChange={() =>
+                            setSaveAsShippingBillingCheckbox(!saveAsShippingBillingCheckbox)
+                          }
+                        />
+                      }
+                    />
+                  )}
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
           <AddressForm
             saveAddressLabel={''}
             setAutoFocus={true}
@@ -452,7 +508,13 @@ const AddressBook = (props: AddressBookProps) => {
               }
             />
           )}
-          <Stack pl={1} gap={2} sx={{ width: { xs: '100%', md: '50%', maxWidth: '26.313rem' } }}>
+
+          <Stack
+            pl={1}
+            pt={1}
+            gap={2}
+            sx={{ width: { xs: '100%', md: '50%', maxWidth: '26.313rem' } }}
+          >
             <Button variant="contained" color="secondary" onClick={handleCancelUpdateAddress}>
               {t('cancel')}
             </Button>

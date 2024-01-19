@@ -9,7 +9,12 @@ import {
   checkoutMock,
   checkoutGroupRatesMock,
   orderSubscriptionNowMock,
+  customerB2BUserForPage0Mock,
+  customerPurchaseOrderMock,
+  customerPurchaseOrderAccountMock,
+  b2BAccountHierarchyResult,
 } from '../stories'
+import { b2BAccountResponseMock } from '../stories/b2BAccountResponseMock'
 import { cartItemMock } from '../stories/cartItemMock'
 import { cartCouponMock, cartMock } from '../stories/cartMock'
 import { categoryTreeDataMock } from '../stories/categoryTreeDataMock'
@@ -23,6 +28,8 @@ import { orderCollection } from '../stories/orderCollection'
 import { orderCouponMock } from '../stories/orderMock'
 import { productPriceMock } from '../stories/productPriceMock'
 import { productSearchResultMock } from '../stories/productSearchResultMock'
+import { quoteMock } from '../stories/quoteMock'
+import { quotesMock } from '../stories/quotesMock'
 import { searchSuggestionMock } from '../stories/searchSuggestionResultMock'
 import { subscriptionCollectionMock } from '../stories/subscriptionCollectionMock'
 // import { updateCustomerAccountCardMock } from '../stories/updateCustomerAccountCardMock'
@@ -77,6 +84,10 @@ export const checkoutHandlers = [
 
   graphql.query('getShippingRates', (_req, res, ctx) => {
     return res(ctx.data(shippingRateMock))
+  }),
+  // Purchase order
+  graphql.query('customerPurchaseOrderAccount', (_req, res, ctx) => {
+    return res(ctx.data(customerPurchaseOrderMock))
   }),
 
   // Payment Step
@@ -154,6 +165,10 @@ export const checkoutHandlers = [
 ]
 
 export const accountHandlers = [
+  graphql.query('customerPurchaseOrderAccount', (_req, res, ctx) => {
+    return res(ctx.data(customerPurchaseOrderAccountMock))
+  }),
+
   graphql.query('customerAccountCards', (_req, res, ctx) => {
     return res(ctx.data(customerAccountCardsMock))
   }),
@@ -281,6 +296,14 @@ export const cartHandlers = [
     )
   }),
 
+  graphql.mutation('addItemsToCurrentCart', (_req, res, ctx) => {
+    return res(
+      ctx.data({
+        addItemsToCurrentCart: true,
+      })
+    )
+  }),
+
   graphql.mutation('updateCartItemQuantity', (_req, res, ctx) => {
     return res(
       ctx.data({
@@ -316,6 +339,14 @@ export const cartHandlers = [
       })
     )
   }),
+
+  graphql.mutation('deleteCurrentCart', (_req, res, ctx) => {
+    return res(
+      ctx.data({
+        deleteCurrentCart: true,
+      })
+    )
+  }),
 ]
 
 export const storeHandlers = [
@@ -329,6 +360,10 @@ export const wishlistHandlers = [
   graphql.query('wishlists', (_req, res, ctx) => {
     return res(ctx.data({ wishlists: wishlistMock }))
   }),
+  // useGetCustomerWishlist
+  graphql.query('customerWishlist', (_req, res, ctx) => {
+    return res(ctx.data({ customerWishlist: wishlistMock?.items?.[0] }))
+  }),
 
   graphql.mutation('createWishlist', (_req, res, ctx) => {
     const { customerAccountId, id, name } = wishlistMock?.items[0]
@@ -338,6 +373,14 @@ export const wishlistHandlers = [
   graphql.mutation('createWishlistItem', (_req, res, ctx) => {
     return res(ctx.data({ createWishlistItem: wishlistMock?.items[0].items[0] }))
   }),
+  // useDeleteWishlistMutation
+  graphql.mutation('deletewishlist', (_req, res, ctx) => {
+    return res(
+      ctx.data({
+        deleteWishlist: true,
+      })
+    )
+  }),
   // useRemoveWishlistItemMutation
   graphql.mutation('deletewishlistitem', (_req, res, ctx) => {
     return res(
@@ -345,6 +388,13 @@ export const wishlistHandlers = [
         deleteWishlistItem: true,
       })
     )
+  }),
+  graphql.mutation('updateWishlist', (_req, res, ctx) => {
+    const { customerAccountId, id, name } = wishlistMock.items[0]
+    return res(ctx.data({ customerAccountId, id, name, items: [] }))
+  }),
+  graphql.mutation('updateWishlistItemQuantity', (_req, res, ctx) => {
+    return res(ctx.data({ id: '62171e6cd0254c4bafb4b05100df8e1c', quantity: 10 }))
   }),
 ]
 
@@ -447,6 +497,159 @@ export const subscriptionHandlers = [
   }),
 ]
 
+export const b2bHandlers = [
+  // useGetB2BUserQuery
+  graphql.query('b2bAccountUsers', (_req, res, ctx) => {
+    return res(ctx.data({ b2bAccountUsers: customerB2BUserForPage0Mock }))
+  }),
+
+  // useCreateCustomerB2bUser
+  graphql.mutation('createCustomerB2bAccountUser', (_req, res, ctx) => {
+    return res(
+      ctx.data({
+        createCustomerB2bAccountUser: customerB2BUserForPage0Mock?.items[0],
+      })
+    )
+  }),
+
+  // useUpdateCustomerB2bUser
+  graphql.mutation('updateCustomerB2bAccountUser', (_req, res, ctx) => {
+    return res(
+      ctx.data({
+        updateCustomerB2bAccountUser: customerB2BUserForPage0Mock?.items[0],
+      })
+    )
+  }),
+
+  // useDeleteB2bAccountRole
+  graphql.mutation('deleteB2bAccountRole', (_req, res, ctx) => {
+    return res(ctx.data({ deleteB2bAccountRole: true }))
+  }),
+
+  // useAddRoleToCustomerB2bAccount
+  graphql.mutation('addRoleToCustomerB2bAccount', (_req, res, ctx) => {
+    return res(ctx.data({ addRoleToCustomerB2bAccount: true }))
+  }),
+
+  // useRemoveCustomerB2bUser
+  graphql.mutation('removeCustomerB2bAccountUser', (_req, res, ctx) => {
+    return res(ctx.data({ removeCustomerB2bAccountUser: true }))
+  }),
+
+  // useGetB2BAccountHierarchy
+  graphql.query('getB2BAccountHierarchy', (_req, res, ctx) => {
+    return res(ctx.data({ getB2BAccountHierarchy: b2BAccountHierarchyResult }))
+  }),
+
+  // useCreateCustomerB2bAccount
+  graphql.mutation('createCustomerB2bAccount', (_req, res, ctx) => {
+    return res(ctx.data({ createCustomerB2bAccount: b2BAccountResponseMock }))
+  }),
+
+  // useChangeB2bAccountParent
+  graphql.mutation('changeB2BAccountParent', (_req, res, ctx) => {
+    return res(
+      ctx.data({
+        changeB2bAccountParent: {
+          ...b2BAccountHierarchyResult?.accounts?.[2],
+          parentAccountId: b2BAccountHierarchyResult?.accounts?.[0]?.id,
+        },
+      })
+    )
+  }),
+
+  // useUpdateCustomerB2bAccount
+  graphql.mutation('updateCustomerB2bAccount', (_req, res, ctx) => {
+    return res(ctx.data({ updateCustomerB2bAccount: b2BAccountResponseMock }))
+  }),
+
+  // useGetQuoteById
+  graphql.query('getQuoteByID', (_req, res, ctx) => {
+    return res(ctx.data({ quote: quoteMock?.items?.[0] }))
+  }),
+
+  //useCreateQuote
+  graphql.mutation('createQuote', (_req, res, ctx) => {
+    return res(ctx.data({ createQuote: quoteMock?.items?.[0] }))
+  }),
+
+  //useCreateQuoteFromCart
+  graphql.mutation('createQuoteFromCart', (_req, res, ctx) => {
+    return res(ctx.data({ createQuoteFromCart: quoteMock?.items?.[0] }))
+  }),
+
+  //useUpdateQuotesComments
+  graphql.mutation('updateQuotesComments', (_req, res, ctx) => {
+    return res(
+      ctx.data({
+        updateQuotesComments: {
+          id: 'test-id',
+          text: 'test comment',
+        },
+      })
+    )
+  }),
+  //useUpdateQuote
+  graphql.mutation('updateQuote', (_req, res, ctx) => {
+    return res(ctx.data({ updateQuote: quoteMock?.items?.[0] }))
+  }),
+
+  //useUpdateQuoteFulfillmentInfo
+  graphql.mutation('updateQuoteFulfillmentInfo', (_req, res, ctx) => {
+    return res(ctx.data({ updateQuoteFulfillmentInfo: quoteMock?.items?.[0] }))
+  }),
+
+  // useCreateQuoteItem
+  graphql.mutation('createQuoteItem', (_req, res, ctx) => {
+    return res(ctx.data({ createQuoteItem: quoteMock?.items?.[0] }))
+  }),
+
+  // useDeleteQuoteItem
+  graphql.mutation('deleteQuoteItem', (_req, res, ctx) => {
+    return res(ctx.data({ deleteQuoteItem: true }))
+  }),
+
+  graphql.mutation('deleteQuote', (_req, res, ctx) => {
+    return res(ctx.data({ deleteQuote: true }))
+  }),
+
+  graphql.mutation('updateQuoteEmail', (_req, res, ctx) => {
+    return res(ctx.data({ updateQuoteEmail: true }))
+  }),
+
+  graphql.query('quotes', (_req, res, ctx) => {
+    return res(ctx.data({ quotes: quotesMock }))
+  }),
+
+  graphql.query('getQuoteShippingMethods', (_req, res, ctx) => {
+    return res(ctx.data({ getQuoteShippingMethods: shippingRateMock?.orderShipmentMethods }))
+  }),
+  //useUpdateQuoteItemQuantity
+  graphql.mutation('updateQuoteItemQuantity', (_req, res, ctx) => {
+    return res(ctx.data({ updateQuoteItemQuantity: quoteMock?.items?.[0] }))
+  }),
+
+  //useUpdateQuoteItemFulfillment
+  graphql.mutation('updateQuoteItemFulfillment', (_req, res, ctx) => {
+    return res(ctx.data({ updateQuoteItemFulfillment: quoteMock?.items?.[0] }))
+  }),
+
+  //useUpdateQuoteAdjustments
+  graphql.mutation('updateQuoteAdjustments', (_req, res, ctx) => {
+    return res(ctx.data({ updateQuoteAdjustments: quoteMock?.items?.[0] }))
+  }),
+
+  //useUpdateQuoteCoupon
+  graphql.mutation('updateQuoteCoupon', (_req, res, ctx) => {
+    return res(ctx.data({ updateQuoteCoupon: quoteMock?.items?.[0] }))
+  }),
+
+  //useDeleteQuoteCoupon
+  graphql.mutation('deleteQuoteCoupon', (_req, res, ctx) => {
+    return res(ctx.data({ deleteQuoteCoupon: quoteMock?.items?.[0] }))
+  }),
+]
+
 export const handlers = [
   ...checkoutHandlers,
   ...searchSuggestionHandlers,
@@ -461,4 +664,5 @@ export const handlers = [
   ...orderHandlers,
   ...inventoryHandlers,
   ...subscriptionHandlers,
+  ...b2bHandlers,
 ]

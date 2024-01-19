@@ -21,6 +21,7 @@ import { useRouter } from 'next/router'
 import { useTranslation } from 'next-i18next'
 
 import { HeaderAction, KiboLogo } from '@/components/common'
+import { AccountHierarchyFormDialog } from '@/components/dialogs'
 import {
   MegaMenu,
   SearchSuggestions,
@@ -31,10 +32,12 @@ import {
   HamburgerMenu,
   LoginDialog,
   CheckoutHeader,
+  AccountRequestIcon,
 } from '@/components/layout'
 import { useAuthContext, useHeaderContext, useModalContext } from '@/context'
-import { useGetCategoryTree } from '@/hooks'
-import type { NavigationLink } from '@/lib/types'
+import { useCreateCustomerB2bAccountMutation, useGetCategoryTree } from '@/hooks'
+import { buildCreateCustomerB2bAccountParams } from '@/lib/helpers'
+import type { CreateCustomerB2bAccountParams, NavigationLink } from '@/lib/types'
 
 import type { Maybe, PrCategory } from '@/lib/gql/types'
 
@@ -47,8 +50,10 @@ interface KiboHeaderProps {
 interface HeaderActionAreaProps {
   isHeaderSmall: boolean
   categoriesTree: Maybe<PrCategory>[]
+  isElementVisible?: boolean
   setIsBackdropOpen: Dispatch<SetStateAction<boolean>>
   onAccountIconClick: () => void
+  onAccountRequestClick: () => void
 }
 
 interface HideOnScrollProps {
@@ -148,7 +153,14 @@ const TopHeader = ({
 }
 
 const HeaderActionArea = (props: HeaderActionAreaProps) => {
-  const { isHeaderSmall, categoriesTree, setIsBackdropOpen, onAccountIconClick } = props
+  const {
+    isHeaderSmall,
+    categoriesTree,
+    isElementVisible,
+    setIsBackdropOpen,
+    onAccountIconClick,
+    onAccountRequestClick,
+  } = props
   const { headerState, toggleSearchBar } = useHeaderContext()
   const { isMobileSearchPortalVisible, isSearchBarVisible } = headerState
   const { t } = useTranslation('common')
@@ -207,12 +219,22 @@ const HeaderActionArea = (props: HeaderActionAreaProps) => {
               onClick={() => toggleSearchBar(true)}
             />
           )}
-          <StoreFinderIcon size={isHeaderSmall ? 'medium' : 'large'} />
+          <StoreFinderIcon
+            size={isHeaderSmall ? 'medium' : 'large'}
+            isElementVisible={isElementVisible}
+          />
           <AccountIcon
             size={isHeaderSmall ? 'medium' : 'large'}
+            isElementVisible={isElementVisible}
             onAccountIconClick={onAccountIconClick}
           />
-          <CartIcon size={isHeaderSmall ? 'medium' : 'large'} />
+          <AccountRequestIcon
+            onClick={onAccountRequestClick}
+            isElementVisible={isElementVisible}
+            iconProps={{ fontSize: isHeaderSmall ? 'medium' : 'large' }}
+            buttonText={t('b2b-account-request')}
+          />
+          <CartIcon size={isHeaderSmall ? 'medium' : 'large'} isElementVisible={isElementVisible} />
         </Box>
       </Container>
     </Box>
@@ -234,7 +256,8 @@ const KiboHeader = (props: KiboHeaderProps) => {
   const { data: categoriesTree } = useGetCategoryTree(initialCategoryTree)
   const { headerState, toggleMobileSearchPortal, toggleHamburgerMenu } = useHeaderContext()
   const { isAuthenticated } = useAuthContext()
-  const { showModal } = useModalContext()
+  const { showModal, closeModal } = useModalContext()
+  const { t } = useTranslation('common')
   const router = useRouter()
   const theme = useTheme()
   const mdScreen = useMediaQuery(theme.breakpoints.up('md'))
@@ -242,6 +265,7 @@ const KiboHeader = (props: KiboHeaderProps) => {
     disableHysteresis: true,
     threshold: 0,
   })
+  const { createCustomerB2bAccount } = useCreateCustomerB2bAccountMutation()
 
   const [isBackdropOpen, setIsBackdropOpen] = useState<boolean>(false)
 
@@ -260,6 +284,26 @@ const KiboHeader = (props: KiboHeaderProps) => {
     }
   }
 
+  const handleAccountRequest = async (formValues: CreateCustomerB2bAccountParams) => {
+    const variables = buildCreateCustomerB2bAccountParams(formValues)
+    await createCustomerB2bAccount.mutateAsync(variables)
+    closeModal()
+  }
+
+  const handleB2BAccountRequestClick = () => {
+    showModal({
+      Component: AccountHierarchyFormDialog,
+      props: {
+        isAddingAccountToChild: false,
+        isRequestAccount: true,
+        primaryButtonText: t('request-account'),
+        formTitle: t('b2b-account-request'),
+        onSave: (formValues: CreateCustomerB2bAccountParams) => handleAccountRequest(formValues),
+        onClose: () => closeModal(),
+      },
+    })
+  }
+
   const getSection = (): React.ReactNode => {
     if (isCheckoutPage) return <CheckoutHeader isMultiShipEnabled={isMultiShipEnabled} />
 
@@ -271,6 +315,8 @@ const KiboHeader = (props: KiboHeaderProps) => {
         categoriesTree={categoriesTree}
         setIsBackdropOpen={setIsBackdropOpen}
         onAccountIconClick={handleAccountIconClick}
+        onAccountRequestClick={handleB2BAccountRequestClick}
+        isElementVisible={isElementVisible}
       />
     )
   }
@@ -321,6 +367,15 @@ const KiboHeader = (props: KiboHeaderProps) => {
         setIsDrawerOpen={() => toggleHamburgerMenu()}
         navLinks={navLinks}
         onAccountIconClick={handleAccountIconClick}
+        requestAccountIconComponent={
+          <AccountRequestIcon
+            onClick={handleB2BAccountRequestClick}
+            iconProps={{ fontSize: 'medium' }}
+            buttonText={t('b2b-account-request')}
+            isMobileView={true}
+            isElementVisible={true}
+          />
+        }
       />
     </>
   )

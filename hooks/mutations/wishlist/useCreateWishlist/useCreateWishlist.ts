@@ -8,17 +8,28 @@ import { makeGraphQLClient } from '@/lib/gql/client'
 import { createWishlistMutation } from '@/lib/gql/mutations'
 import { wishlistKeys } from '@/lib/react-query/queryKeys'
 
-const createWishlist = async (customerAccountId: number) => {
+import { CrWishlist, CrWishlistInput } from '@/lib/gql/types'
+
+const createWishlist = async (data: number | CrWishlistInput): Promise<CrWishlist> => {
   const client = makeGraphQLClient()
 
   const { publicRuntimeConfig } = getConfig()
-
-  const variables = {
-    wishlistInput: {
-      customerAccountId,
-      name: publicRuntimeConfig.defaultWishlistName,
-    },
-  }
+  debugger
+  const variables =
+    typeof data === 'number'
+      ? {
+          wishlistInput: {
+            customerAccountId: data,
+            name: publicRuntimeConfig.defaultWishlistName,
+          },
+        }
+      : {
+          wishlistInput: {
+            customerAccountId: data.customerAccountId,
+            name: data.name,
+            items: data.items,
+          },
+        }
   const response = await client.request({
     document: createWishlistMutation,
     variables,
@@ -43,7 +54,6 @@ const createWishlist = async (customerAccountId: number) => {
 
 export const useCreateWishlist = () => {
   const queryClient = useQueryClient()
-
   return {
     createWishlist: useMutation({
       mutationFn: createWishlist,

@@ -17,7 +17,7 @@ import { useTranslation } from 'next-i18next'
 
 import { CartItemList } from '@/components/cart'
 import { PromoCodeBadge, OrderSummary } from '@/components/common'
-import { StoreLocatorDialog } from '@/components/dialogs'
+import { ConfirmationDialog, StoreLocatorDialog } from '@/components/dialogs'
 import { useModalContext } from '@/context'
 import {
   useGetCart,
@@ -26,16 +26,15 @@ import {
   useGetPurchaseLocation,
   useUpdateCartItemQuantity,
   useDeleteCartItem,
-  useUpdateCartItem,
   useUpdateCartCoupon,
   useDeleteCartCoupon,
   useInitiateCheckout,
+  useCartActions,
+  useProductCardActions,
 } from '@/hooks'
-import { FulfillmentOptions } from '@/lib/constants'
 import { orderGetters, cartGetters } from '@/lib/getters'
-import type { LocationCustom } from '@/lib/types'
 
-import type { Maybe, CrCart, Location, CrCartItemInput, CrCartItem } from '@/lib/gql/types'
+import type { CrCart, Location, CrCartItem } from '@/lib/gql/types'
 
 export interface CartTemplateProps {
   isMultiShipEnabled: boolean
@@ -56,16 +55,11 @@ const CartTemplate = (props: CartTemplateProps) => {
   const { initiateCheckout } = useInitiateCheckout()
   const { updateCartItemQuantity } = useUpdateCartItemQuantity()
   const { deleteCartItem } = useDeleteCartItem()
-  const { updateCartItem } = useUpdateCartItem()
   const { showModal, closeModal } = useModalContext()
 
   const cartItemCount = cartGetters.getCartItemCount(cart)
   const cartItems = cartGetters.getCartItems(cart)
-  const cartSubTotal = orderGetters.getSubtotal(cart)
-  const cartDiscountedSubTotal = orderGetters.getDiscountedSubtotal(cart)
-  const cartShippingTotal = orderGetters.getShippingTotal(cart)
-  const cartTaxTotal = orderGetters.getTaxTotal(cart)
-  const cartTotal = orderGetters.getTotal(cart)
+
   const locationCodes = orderGetters.getFulfillmentLocationCodes(cartItems as CrCartItem[])
 
   const { data: locations } = useGetStoreLocations({ filter: locationCodes })
@@ -74,6 +68,7 @@ const CartTemplate = (props: CartTemplateProps) => {
   const { deleteCartCoupon } = useDeleteCartCoupon()
   const [promoError, setPromoError] = useState<string>('')
   const [showLoadingButton, setShowLoadingButton] = useState<boolean>(false)
+  const { handleDeleteCurrentCart } = useProductCardActions()
 
   const handleApplyPromoCode = async (couponCode: string) => {
     try {
@@ -83,7 +78,7 @@ const CartTemplate = (props: CartTemplateProps) => {
         couponCode,
       })
       if (response?.invalidCoupons?.length) {
-        setPromoError(response?.invalidCoupons[0]?.reason)
+        setPromoError(`<strong>${couponCode}</strong> ${response?.invalidCoupons[0]?.reason}`)
       }
     } catch (err) {
       console.error(err)
@@ -100,62 +95,12 @@ const CartTemplate = (props: CartTemplateProps) => {
     }
   }
 
-  const handleItemQuantity = async (cartItemId: string, quantity: number) => {
-    try {
-      await updateCartItemQuantity.mutateAsync({ cartItemId, quantity })
-    } catch (err) {
-      console.error(err)
-    }
-  }
   const handleDeleteItem = async (cartItemId: string) => {
     await deleteCartItem.mutateAsync({ cartItemId })
   }
+
   const handleItemActions = () => {
     // your code here
-  }
-  const handleFulfillmentOptionSelection = async (
-    fulfillmentMethod: string,
-    cartItemId: string
-  ) => {
-    const locationCode =
-      fulfillmentMethod === FulfillmentOptions.PICKUP ? (purchaseLocation.code as string) : ''
-    if (fulfillmentMethod === FulfillmentOptions.PICKUP && !locationCode) {
-      handleProductPickupLocation(cartItemId)
-    } else {
-      mutateCartItem(cartItemId, fulfillmentMethod, locationCode)
-    }
-  }
-
-  const handleProductPickupLocation = (cartItemId: string) => {
-    showModal({
-      Component: StoreLocatorDialog,
-      props: {
-        handleSetStore: async (selectedStore: LocationCustom) => {
-          mutateCartItem(cartItemId, FulfillmentOptions.PICKUP, selectedStore?.code)
-          closeModal()
-        },
-      },
-    })
-  }
-
-  const mutateCartItem = async (
-    cartItemId: string,
-    fulfillmentMethod: string,
-    locationCode = ''
-  ) => {
-    try {
-      const cartItem = cartItems.find((item: Maybe<CrCartItem>) => item?.id === cartItemId)
-      await updateCartItem.mutateAsync({
-        cartItemInput: {
-          ...(cartItem as CrCartItemInput),
-          fulfillmentMethod,
-          fulfillmentLocationCode: locationCode,
-        },
-        cartItemId: cartItemId,
-      })
-    } catch (err) {
-      console.log(err)
-    }
   }
 
   const handleGotoCheckout = async () => {
@@ -163,7 +108,7 @@ const CartTemplate = (props: CartTemplateProps) => {
     try {
       const initiateOrderResponse = isMultiShipEnabled
         ? await initiateCheckout.mutateAsync(cart?.id)
-        : await initiateOrder.mutateAsync(cart?.id)
+        : await initiateOrder.mutateAsync({ cartId: cart?.id as string })
 
       if (initiateOrderResponse?.id) {
         router.push(`/checkout/${initiateOrderResponse.id}`)
@@ -175,19 +120,11 @@ const CartTemplate = (props: CartTemplateProps) => {
   }
 
   const orderSummaryArgs = {
-    nameLabel: t('order-summary'),
+    nameLabel: t('cart-summary'),
     subTotalLabel: `${t('subtotal')} (${t('item-quantity', { count: cartItemCount })})`,
-    shippingTotalLabel: t('shipping'),
-    taxLabel: t('estimated-tax'),
     totalLabel: t('estimated-order-total'),
-    subTotal: t('currency', { val: cartSubTotal }),
-    discountedSubtotal:
-      cartDiscountedSubTotal && cartDiscountedSubTotal !== cartSubTotal
-        ? t('currency', { val: cartDiscountedSubTotal })
-        : '',
-    shippingTotal: cartShippingTotal ? t('currency', { val: cartShippingTotal }) : t('free'),
-    tax: t('currency', { val: cartTaxTotal }),
-    total: t('currency', { val: cartTotal }),
+    orderDetails: cart,
+    isShippingTaxIncluded: false,
     promoComponent: (
       <PromoCodeBadge
         onApplyCouponCode={handleApplyPromoCode}
@@ -201,6 +138,23 @@ const CartTemplate = (props: CartTemplateProps) => {
 
   const handleContinueShopping = () => {
     router.back()
+  }
+
+  const { onFulfillmentOptionChange, handleQuantityUpdate, handleProductPickupLocation } =
+    useCartActions({
+      cartItems: cartItems as CrCartItem[],
+      purchaseLocation,
+    })
+
+  const openClearCartConfirmation = () => {
+    showModal({
+      Component: ConfirmationDialog,
+      props: {
+        onConfirm: handleDeleteCurrentCart,
+        contentText: t('clear-cart-confirmation-text'),
+        primaryButtonText: t('delete'),
+      },
+    })
   }
 
   return (
@@ -236,11 +190,11 @@ const CartTemplate = (props: CartTemplateProps) => {
                 locations && Object.keys(locations).length ? (locations as Location[]) : []
               }
               purchaseLocation={purchaseLocation}
-              onCartItemQuantityUpdate={handleItemQuantity}
               onCartItemDelete={handleDeleteItem}
-              onCartItemActionSelection={handleItemActions}
-              onFulfillmentOptionSelection={handleFulfillmentOptionSelection}
+              onCartItemQuantityUpdate={handleQuantityUpdate}
+              onFulfillmentOptionChange={onFulfillmentOptionChange}
               onProductPickupLocation={handleProductPickupLocation}
+              onCartItemActionSelection={handleItemActions}
             />
             <Box py={5}>
               <Button
@@ -268,6 +222,16 @@ const CartTemplate = (props: CartTemplateProps) => {
                 >
                   {t('go-to-checkout')}
                 </LoadingButton>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  name="clearCart"
+                  fullWidth
+                  onClick={openClearCartConfirmation}
+                  disabled={!cartItemCount}
+                >
+                  {t('clear-cart')}
+                </Button>
               </Stack>
             </OrderSummary>
           </Grid>

@@ -4,12 +4,27 @@ fragment wishlistItem on CrWishlistItem {
     quantity
     total
     subtotal
+    discountTotal
+    discountedTotal
+    productDiscounts {
+      discountQuantity
+      productQuantity
+      impactPerUnit
+      impact
+      excluded
+      discount {
+        id
+        name
+        hasMultipleTargetProducts
+      }
+    }
     product {
         productCode
         name
         description
         imageUrl
         variationProductCode
+        fulfillmentTypesSupported
         options {
             attributeFQN
             name
@@ -34,6 +49,12 @@ fragment wishlistItem on CrWishlistItem {
 export const wishlist = /* GraphQL */ `
   fragment wishlist on CrWishlist {
     customerAccountId
+    auditInfo {
+      createDate
+      createBy
+      updateDate
+      updateBy
+    }
     name
     id
     items {

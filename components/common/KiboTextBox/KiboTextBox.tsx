@@ -5,10 +5,10 @@ import { alpha, styled } from '@mui/material/styles'
 
 export interface KiboTextBoxProps {
   label?: string
-  value?: string | null
+  value?: string | null | React.ReactNode
   required?: boolean
   error?: boolean
-  helperText?: string
+  helperText?: any
   placeholder?: string
   icon?: React.ReactNode
   onChange?: (name: string, value: string) => void
@@ -60,6 +60,8 @@ const KiboTextBox = (props: KiboTextBoxProps) => {
     onChange,
     onBlur,
     onIconClick,
+    onInput,
+    name,
     ...rest
   } = props
 
@@ -74,6 +76,7 @@ const KiboTextBox = (props: KiboTextBoxProps) => {
           borderWidth: '1px',
           borderStyle: 'solid',
           borderRadius: 1,
+          fontSize: { xs: '14px !important', md: '16px !important' },
           ...sx,
         }}
         value={value}
@@ -82,7 +85,7 @@ const KiboTextBox = (props: KiboTextBoxProps) => {
         error={error}
         inputProps={{
           'aria-invalid': error,
-          'aria-label': label,
+          'aria-label': label || (name as string),
         }}
         placeholder={placeholder}
         onChange={(e) => onChange && onChange(e.target.name, e.target.value)}
@@ -90,6 +93,7 @@ const KiboTextBox = (props: KiboTextBoxProps) => {
           onBlur && onBlur(e.target.name, e.target.value)
         }}
         onKeyDown={onKeyDown}
+        onInput={onInput}
         {...(icon && {
           endAdornment: onIconClick ? (
             <IconButton aria-label="toggle icon visibility" size="small" onClick={onIconClick}>
@@ -102,9 +106,11 @@ const KiboTextBox = (props: KiboTextBoxProps) => {
         {...rest}
       />
 
-      <FormHelperText id="helper-text" error aria-errormessage={helperText}>
-        {error ? helperText : ' '}
-      </FormHelperText>
+      <FormHelperText
+        id="helper-text"
+        aria-errormessage={helperText}
+        dangerouslySetInnerHTML={{ __html: helperText || '&nbsp;' }}
+      />
     </FormControl>
   )
 }

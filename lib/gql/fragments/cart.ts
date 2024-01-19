@@ -12,8 +12,18 @@ export const cartItemDetails = /* GraphQL */ `
     fulfillmentLocationCode
     productDiscounts {
       discountQuantity
-      couponCode
+      productQuantity
+      impactPerUnit
+      impact
+      excluded
+      discount {
+        id
+        name
+        hasMultipleTargetProducts
+      }
     }
+    discountTotal
+    discountedTotal
     subtotal
     total
     product {

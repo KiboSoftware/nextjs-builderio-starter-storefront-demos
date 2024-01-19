@@ -4,23 +4,25 @@ import type { MutationCreateWishlistItemArgs } from '@/lib/gql/types'
 
 export const buildAddToWishlistItemParams = (
   product: WishlistProductInput,
-  wishlistId: string
+  wishlistId: string,
+  quantity?: number
 ): MutationCreateWishlistItemArgs => {
   return {
     wishlistId: wishlistId,
     wishlistItemInput: {
+      quantity: quantity ? quantity : 1,
       product: {
-        options: product?.options?.map((option) => {
+        options: product?.options?.map((option: any) => {
           return {
+            name: option?.attributeDetail?.name,
+            value: option?.value,
             attributeFQN: option?.attributeFQN,
-            value: option?.value || option?.shopperEnteredValue,
           }
         }),
-        productCode: product?.productCode || '',
-        variationProductCode: product?.variationProductCode || '',
-        isPackagedStandAlone: product?.isPackagedStandAlone || true,
+        productCode: product?.productCode,
+        variationProductCode: product?.variationProductCode,
+        isPackagedStandAlone: product?.isPackagedStandAlone || false,
       },
-      quantity: 1,
     },
   }
 }

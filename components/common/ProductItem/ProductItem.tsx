@@ -39,22 +39,26 @@ export interface ProductItemProps {
   width?: string
   subscriptionFrequency?: string
   showChangeStoreLink?: boolean
+  isQuickOrder?: boolean
+  discounts?: any
   onStoreLocatorClick?: () => void
 }
 
 const styles = {
   imageContainer: {
-    height: 120,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    minWidth: '80px',
+    aspectRatio: 1,
   },
 }
 
 const ProductItem = (props: ProductItemProps) => {
   const {
     id,
+    productCode,
     image,
     name,
     options,
@@ -66,9 +70,10 @@ const ProductItem = (props: ProductItemProps) => {
     purchaseLocation,
     link,
     children,
-    width = '25%',
+    isQuickOrder = false,
     subscriptionFrequency,
     showChangeStoreLink,
+    discounts,
     onStoreLocatorClick,
   } = props
   const { t } = useTranslation('common')
@@ -79,23 +84,39 @@ const ProductItem = (props: ProductItemProps) => {
   return (
     <Box key={id}>
       <Box sx={{ display: 'flex', pb: 1, pr: 1, gap: 2, flex: 1 }}>
-        <Box sx={{ ...styles.imageContainer, width }}>
+        <Box sx={{ ...styles.imageContainer }}>
           <Link href={link || ''} passHref>
             <KiboImage
               src={productGetters.handleProtocolRelativeUrl(image) || DefaultImage}
-              layout="fill"
               alt={name}
-              objectFit="contain"
-              errorimage={DefaultImage}
+              width={80}
+              height={80}
             />
           </Link>
         </Box>
 
         <Stack mr={1} flex={1}>
-          <CardContent sx={{ py: 0, px: 1 }}>
+          <CardContent
+            sx={{
+              py: 0,
+              px: 1,
+              '&.MuiCardContent-root:last-child': {
+                pb: 0,
+              },
+            }}
+          >
             <Typography variant="h4" data-testid="productName" pb={0.375}>
               {name}
             </Typography>
+            {isQuickOrder && productCode && (
+              <Box data-testid="product-code">
+                <KeyValueDisplay
+                  option={{ name: 'Code', value: productCode }}
+                  variant="body2"
+                  fontWeight="bold"
+                />
+              </Box>
+            )}
 
             {children}
 
@@ -138,6 +159,16 @@ const ProductItem = (props: ProductItemProps) => {
                     variant="body2"
                   />
                 )}
+                {discounts?.map((discount: any) => (
+                  <KeyValueDisplay
+                    key={`${discount?.discount?.name}`}
+                    color="error.main"
+                    option={{
+                      name: `${discount?.discount?.name}:`,
+                      value: `-${t('currency', { val: discount?.impact })} `,
+                    }}
+                  />
+                ))}
                 {subscriptionFrequency && (
                   <Box pb={1}>
                     <KeyValueDisplay

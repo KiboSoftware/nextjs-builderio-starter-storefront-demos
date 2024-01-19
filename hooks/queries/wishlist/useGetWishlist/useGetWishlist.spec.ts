@@ -10,6 +10,21 @@ describe('[hooks] useGetWishlist', () => {
       wrapper: createQueryClientWrapper(),
     })
 
-    await waitFor(() => expect(result.current.data).toStrictEqual(wishlistMock?.items[0]))
+    await waitFor(() => {
+      expect(result.current.data).toStrictEqual(wishlistMock?.items[0])
+    })
+  })
+
+  it('should return all wishlists', async () => {
+    const { result } = renderHook(
+      () => useGetWishlist({ startIndex: 0, pageSize: 5, sortBy: '', filter: '' }),
+      {
+        wrapper: createQueryClientWrapper(),
+      }
+    )
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    await waitFor(() => {
+      expect(result.current.data).toStrictEqual(wishlistMock)
+    })
   })
 })
