@@ -2,44 +2,67 @@ import getConfig from 'next/config'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import { ReCaptchaProvider } from 'next-recaptcha-v3'
 
-import { MyAccountTemplate } from '@/components/page-templates'
+import { B2BTemplate, MyAccountTemplate } from '@/components/page-templates'
 import { useAuthContext } from '@/context'
-import { decodeParseCookieValue } from '@/lib/helpers'
+import { getCurrentUser } from '@/lib/api/operations'
+import { AccountType } from '@/lib/constants'
 
-import type { GetServerSideProps, GetServerSidePropsContext, NextPage } from 'next'
+import type {
+  GetServerSideProps,
+  GetServerSidePropsContext,
+  NextApiRequest,
+  NextApiResponse,
+  NextPage,
+} from 'next'
+
+interface MyAccountPageProps {
+  customerAccount?: any
+}
 
 export const getServerSideProps: GetServerSideProps = async (
   context: GetServerSidePropsContext
 ) => {
-  const { locale, req } = context
+  const { locale, req, res } = context
 
-  const { publicRuntimeConfig } = getConfig()
-  const authCookieName = publicRuntimeConfig.userCookieKey.toLowerCase()
-  const cookies = req?.cookies
-  const authTicket = decodeParseCookieValue(cookies[authCookieName])
+  const response = await getCurrentUser(req as NextApiRequest, res as NextApiResponse)
 
   return {
     props: {
-      isAuthenticated: !!authTicket,
+      customerAccount: response?.customerAccount,
       ...(await serverSideTranslations(locale as string, ['common'])),
     },
   }
 }
 
-const MyAccountPage: NextPage = (props: any) => {
-  const { isAuthenticated: serverSideIsAuthenticated } = props
-  const { user: customerAccount } = useAuthContext()
+const MyAccountPage: NextPage<MyAccountPageProps> = (props) => {
+  const { customerAccount: customerAccountFromServer } = props
+
+  const serverSideIsAuthenticated = Boolean(customerAccountFromServer?.id)
+
+  const { user: customerAccountFromClient } = useAuthContext()
+
+  const customerAccount = {
+    ...customerAccountFromServer,
+    ...customerAccountFromClient,
+  }
+
   const { publicRuntimeConfig } = getConfig()
   const { reCaptchaKey } = publicRuntimeConfig.recaptcha
 
-  if (!serverSideIsAuthenticated && !customerAccount) return null
+  if (!serverSideIsAuthenticated && !Object.keys(customerAccount).length) return null
 
-  return reCaptchaKey ? (
-    <ReCaptchaProvider reCaptchaKey={reCaptchaKey}>
-      <MyAccountTemplate user={customerAccount} />
-    </ReCaptchaProvider>
+  const isB2BUser = customerAccount?.accountType?.toLowerCase() === AccountType.B2B.toLowerCase()
+
+  const template = isB2BUser ? (
+    <B2BTemplate user={customerAccount} />
   ) : (
     <MyAccountTemplate user={customerAccount} />
+  )
+
+  return reCaptchaKey ? (
+    <ReCaptchaProvider reCaptchaKey={reCaptchaKey}>{template}</ReCaptchaProvider>
+  ) : (
+    template
   )
 }
 

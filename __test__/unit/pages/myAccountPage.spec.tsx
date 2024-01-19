@@ -1,7 +1,9 @@
 import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
 
+import { userMock } from '@/__mocks__/stories'
 import { createQueryClientWrapper } from '@/__test__/utils'
+import { AuthContext } from '@/context'
 import MyAccountPage, { getServerSideProps } from '@/pages/my-account/index'
 
 let mockIsAuthenticated = true
@@ -14,6 +16,10 @@ interface MyAccountPage {
 }
 jest.mock('@/lib/helpers/cookieHelper', () => ({
   decodeParseCookieValue: jest.fn(() => 'kibo_at'),
+}))
+
+jest.mock('@/lib/api/operations', () => ({
+  getCurrentUser: jest.fn(() => userMock),
 }))
 
 const mockNextI18Next = {
@@ -37,6 +43,12 @@ jest.mock(
   () => () => MyAccountTemplateMock()
 )
 
+const B2BTemplateMock = () => <div data-testid="B2BTemplate-mock" />
+jest.mock(
+  '@/components/page-templates/B2B/B2BTemplate/B2BTemplate.tsx',
+  () => () => B2BTemplateMock()
+)
+
 describe('[page] MyAccount Page', () => {
   it('should run getServerSideProps method', async () => {
     const context = {
@@ -53,36 +65,59 @@ describe('[page] MyAccount Page', () => {
       props: {
         isAuthenticated: mockIsAuthenticated,
         _nextI18Next: mockNextI18Next,
+        customerAccount: userMock.customerAccount,
       },
     })
   })
 
   it('should render the MyAccount page template', () => {
     mockIsAuthenticated = true
-    MyAccountPage.defaultProps = { isAuthenticated: mockIsAuthenticated }
     jest.mock('@/context/AuthContext', () => ({
       useAuthContext: () => ({ user: mockCustomerAccount }),
     }))
 
     render(<MyAccountPage />, {
-      wrapper: createQueryClientWrapper(),
+      wrapper: MyAccountTemplateMock,
     })
 
     const myAccountTemplate = screen.getByTestId('MyAccountTemplate-mock')
+    console.log(myAccountTemplate.innerHTML)
     expect(myAccountTemplate).toBeVisible()
   })
 
   it('should not render MyAccountTemplate if not authenticated', () => {
     mockIsAuthenticated = false
-    MyAccountPage.defaultProps = { isAuthenticated: mockIsAuthenticated }
     jest.mock('@/context/AuthContext', () => ({
       useAuthContext: () => ({ user: null }),
     }))
-    render(<MyAccountPage />, {
+    render(<MyAccountPage customerAccount={null} />, {
       wrapper: createQueryClientWrapper(),
     })
 
     const myAccountTemplate = screen.queryByTestId('MyAccountTemplate-mock')
     expect(myAccountTemplate).not.toBeInTheDocument()
+  })
+
+  it('renders B2BTemplate when isB2bTemplate is true', () => {
+    const values = {
+      isAuthenticated: true,
+      user: {
+        id: 1,
+        accountType: 'B2B',
+      },
+      login: jest.fn(),
+      createAccount: jest.fn(),
+      setUser: jest.fn(),
+      logout: jest.fn(),
+    }
+
+    render(
+      <AuthContext.Provider value={values}>
+        <MyAccountPage />
+      </AuthContext.Provider>
+    )
+
+    const b2bTemplate = screen.getByTestId('B2BTemplate-mock')
+    expect(b2bTemplate).toBeInTheDocument()
   })
 })

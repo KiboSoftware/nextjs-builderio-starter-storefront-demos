@@ -36,6 +36,18 @@ export const checkoutLineItemFragment = /* GraphQL */ `
     subtotal
     discountTotal
     quantity
+    productDiscounts {
+      discountQuantity
+      productQuantity
+      impactPerUnit
+      impact
+      excluded
+      discount {
+        id
+        name
+        hasMultipleTargetProducts
+      }
+    }
     product {
       ...checkoutItemProductFragment
     }
@@ -57,7 +69,29 @@ export const baseCheckoutFragment = /* GraphQL */ `
     handlingSubTotal
     handlingTotal
     handlingTaxTotal
+    handlingDiscounts {
+      impact
+      discount {
+        id
+        name
+        itemIds
+      }
+      couponCode
+      excluded
+    }
     total
+    shippingDiscounts {
+      methodCode
+      discount {
+        impact
+        couponCode
+        excluded
+        discount {
+          id
+          name
+        }
+      }
+    }
     shippingTotal
     shippingTaxTotal
     shippingSubTotal
@@ -65,6 +99,8 @@ export const baseCheckoutFragment = /* GraphQL */ `
     discountedSubtotal
     discountedTotal
     subtotal
+    lineItemSubtotalWithOrderAdjustments
+    itemTaxTotal
     taxTotal
     orderNumber
     couponCodes
@@ -207,6 +243,13 @@ export const checkoutPaymentFragment = /* GraphQL */ `
         ...billingContactFragment
       }
       isSameBillingShippingAddress
+      purchaseOrder {
+        purchaseOrderNumber
+        paymentTerm {
+          description
+          code
+        }
+      }
       card {
         paymentServiceCardId
         isTokenized
@@ -214,6 +257,7 @@ export const checkoutPaymentFragment = /* GraphQL */ `
         cardNumberPartOrMask
         expireMonth
         expireYear
+        isCardInfoSaved
       }
     }
   }

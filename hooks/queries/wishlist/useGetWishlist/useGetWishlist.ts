@@ -1,54 +1,85 @@
 /**
  * @module useGetWishlist
  */
-import { useQuery } from '@tanstack/react-query'
+import { QueryObserverResult, RefetchOptions, useQuery } from '@tanstack/react-query'
 
 import { makeGraphQLClient } from '@/lib/gql/client'
 import { getWishlistQuery } from '@/lib/gql/queries'
 import { wishlistKeys } from '@/lib/react-query/queryKeys'
 
-import type { CrWishlist } from '@/lib/gql/types'
+import type { CrWishlist, WishlistCollection } from '@/lib/gql/types'
 
 /**
  * @hidden
  */
+
+type UseWishlistResponseData = WishlistCollection | CrWishlist | []
 export interface UseWishlistResponse {
-  data?: CrWishlist
+  data?: UseWishlistResponseData
   isLoading: boolean
   isSuccess: boolean
   isFetching: boolean
+  isPending: boolean
+  refetch: (
+    options?: RefetchOptions | undefined
+  ) => Promise<QueryObserverResult<UseWishlistResponseData, Error>>
 }
 
-const getWishlists = async (): Promise<CrWishlist> => {
+export interface PageProps {
+  filter: string
+  pageSize: number
+  sortBy: string
+  startIndex: number
+}
+
+const getWishlists = async (params?: PageProps): Promise<UseWishlistResponseData> => {
   const client = makeGraphQLClient()
   const response = await client.request({
     document: getWishlistQuery,
-    variables: {},
+    variables: params ? params : {},
   })
 
-  return response?.wishlists?.items[0] || []
+  return params ? response?.wishlists : response?.wishlists?.items[0] || []
 }
 
 /**
- * [Query hook] useGetWishlist uses the graphQL query
+ * [Query hook] useFetWishlists uses the graphQL query
  *
  * <b>wishlists(startIndex: Int, pageSize: Int, sortBy: String, filter: String): WishlistCollection</b>
  *
  * Description : Fetches the all wishlists for logged in user. To authenticate the user, request header taking token from the cookie.
  *
- * Parameters passed to function getWishlists()
+ * Parameters passed to function getAllWishlists()
  *
- * On success, returns the first item of wishlists as it will always have single item with respect to customer account id.
+ * On success, returns the all wishlists with respect to customer account id if params passed correctly.
  *
- * @returns 'response?.wishlists?.items[0], which contains the first wishlist item'
+ * @returns 'response?.wishlists, which contains the all wishlists item'
+ *
+ * @returns 'response?.wishlists.item[0] || [] if no params passed
  */
 
-export const useGetWishlist = (): UseWishlistResponse => {
-  const { data, isLoading, isSuccess, isFetching } = useQuery({
-    queryKey: wishlistKeys.all,
-    queryFn: getWishlists,
+export const useGetWishlist = (params?: PageProps): UseWishlistResponse => {
+  const { data, isPending, isSuccess, isFetching, isLoading, refetch } = useQuery({
+    queryKey: params ? wishlistKeys.page(params) : wishlistKeys.all,
+    queryFn: () => getWishlists(params),
     refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData ?? undefined,
   })
 
-  return { data, isLoading, isSuccess, isFetching }
+  useQuery({
+    queryKey: params
+      ? wishlistKeys.page({ ...params, startIndex: params.startIndex + params.pageSize })
+      : wishlistKeys.all,
+    queryFn: () =>
+      getWishlists(
+        params
+          ? {
+              ...(params as PageProps),
+              startIndex: params ? params?.startIndex + params?.pageSize : 0,
+            }
+          : undefined
+      ),
+  })
+
+  return { data, isPending, isSuccess, isFetching, isLoading, refetch }
 }

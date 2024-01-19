@@ -7,7 +7,9 @@ import { SmallBanner } from '@/components/home'
 import { CartTemplate } from '@/components/page-templates'
 import { ProductRecommendations } from '@/components/product'
 import { getCart } from '@/lib/api/operations/'
+import { MetaData, PageWithMetaData } from '@/lib/types'
 
+import { CrCart } from '@/lib/gql/types'
 import type { NextPage, GetServerSidePropsContext, NextApiRequest, NextApiResponse } from 'next'
 
 const { publicRuntimeConfig } = getConfig()
@@ -73,6 +75,19 @@ Builder.registerComponent(ProductRecommendations, {
   ],
 })
 
+interface CartPageType extends PageWithMetaData {
+  cart?: CrCart
+  isMultiShipEnabled?: boolean
+}
+function getMetaData(): MetaData {
+  return {
+    title: 'Cart',
+    description: null,
+    keywords: null,
+    canonicalUrl: null,
+    robots: 'noindex,nofollow',
+  }
+}
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { locale, req, res } = context
   const response = await getCart(req as NextApiRequest, res as NextApiResponse)
@@ -88,6 +103,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       cart: response?.currentCart || null,
       cartTopContentSection: cartTopContentSection || null,
       cartBottomContentSection: cartBottomContentSection || null,
+      metaData: getMetaData(),
       ...(await serverSideTranslations(locale as string, ['common'])),
     },
   }

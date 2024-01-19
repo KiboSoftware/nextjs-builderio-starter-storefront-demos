@@ -265,6 +265,11 @@ export type B2BAccountInput = {
   users?: InputMaybe<Array<InputMaybe<B2BUserInput>>>
 }
 
+export type MutationChangeB2bAccountParentArgs = {
+  accountId: Scalars['Int']
+  parentAccountId: Scalars['Int']
+}
+
 export type B2BUser = {
   __typename?: 'B2BUser'
   _get?: Maybe<Scalars['AnyScalar']>
@@ -8955,6 +8960,20 @@ export type MutationUpdateQuoteArgs = {
   updateMode?: InputMaybe<Scalars['String']>
 }
 
+export type MutationUpdateQuoteItemQuantityArgs = {
+  quoteId: Scalars['String']
+  quoteItemId: Scalars['String']
+  quantity: Scalars['Int']
+  updateMode?: InputMaybe<Scalars['String']>
+}
+
+export type MutationUpdateQuoteItemFulfillmentArgs = {
+  quoteId: Scalars['String']
+  quoteItemId: Scalars['String']
+  updateMode?: InputMaybe<Scalars['String']>
+  orderItemInput?: InputMaybe<CrOrderItemInput>
+}
+
 export type MutationUpdateReturnArgs = {
   returnId: Scalars['String']
   returnObjInput?: InputMaybe<ReturnObjInput>
@@ -11965,6 +11984,12 @@ export type QuoteInput = {
   userId?: InputMaybe<Scalars['String']>
   visitId?: InputMaybe<Scalars['String']>
   webSessionId?: InputMaybe<Scalars['String']>
+}
+
+export type QuoteAdjustmentInput = {
+  adjustment?: InputMaybe<Scalars['Float']>
+  shippingAdjustment?: InputMaybe<Scalars['Float']>
+  handlingAdjustment?: InputMaybe<Scalars['Float']>
 }
 
 export type RateRequestAttributeInput = {

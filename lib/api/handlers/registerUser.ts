@@ -2,14 +2,19 @@ import getConfig from 'next/config'
 
 import { fetcher, getAdditionalHeader } from '../util'
 import getUserClaimsFromRequest from '../util/getUserClaimsFromRequest'
+import { fromBitVectorSetArray } from '@/lib/helpers'
+import { NextApiRequestWithLogger } from '@/lib/types'
 
-import type { NextApiRequest, NextApiResponse } from 'next'
+import type { NextApiResponse } from 'next'
 
 const config = getConfig()
 const maxCookieAge = config?.publicRuntimeConfig?.maxCookieAge
 const cookieName = config?.publicRuntimeConfig.userCookieKey.toLowerCase()
 
-export default async function registerUserHandler(req: NextApiRequest, res: NextApiResponse) {
+export default async function registerUserHandler(
+  req: NextApiRequestWithLogger,
+  res: NextApiResponse
+) {
   try {
     const { query, variables } = req.body
     const userClaims = await getUserClaimsFromRequest(req, res)
@@ -17,10 +22,22 @@ export default async function registerUserHandler(req: NextApiRequest, res: Next
     const headers = getAdditionalHeader(req)
 
     const response = await fetcher({ query, variables }, { userClaims, headers })
+    if (response?.errors) {
+      throw {
+        message: response?.errors[0]?.extensions?.response?.body?.message,
+        code: response?.errors[0].extensions.response.status,
+      }
+    }
 
     // set HTTP cookie
     const account = response?.data?.account
     const userId = response?.data?.account?.customerAccount?.userId
+    const jwtAccessToken = response?.data?.account?.jwtAccessToken
+    const decoded = JSON.parse(
+      Buffer.from(jwtAccessToken.split('.')[1], 'base64').toString('ascii')
+    )
+    const bv = decoded['https://www.kibocommerce.com/user_claims'].bv
+    const behaviors = fromBitVectorSetArray(bv)
 
     const cookieValue = {
       accessToken: account?.accessToken,
@@ -35,10 +52,20 @@ export default async function registerUserHandler(req: NextApiRequest, res: Next
       'Set-Cookie',
       `${cookieName}=${encodedValue}; HttpOnly; Max-Age=${maxCookieAge}; path=/`
     )
-    res.status(200).json(response)
-  } catch (error) {
-    console.error(error)
-    const message = 'An unexpected error ocurred'
-    res.status(500).json({ data: null, errors: [{ message }] })
+    // response object
+    const successResponse = {
+      data: {
+        account: {
+          customerAccount: response?.data?.account?.customerAccount,
+          behaviors,
+        },
+      },
+    }
+    // response status
+    const registerResponse = userId ? successResponse : response
+    res.status(200).json(registerResponse)
+  } catch (error: any) {
+    res.status(error?.code).json({ message: error?.message })
+    req.logger.error(error, 'Error in Register user handler')
   }
 }

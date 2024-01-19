@@ -1,19 +1,31 @@
 import { ReactNode, createContext, useState, useContext, useEffect } from 'react'
 
 import { useQueryClient } from '@tanstack/react-query'
+import { deleteCookie } from 'cookies-next'
 import { useRouter } from 'next/router'
 
 import { useSnackbarContext } from './RQNotificationContext/RQNotificationContext'
 import { LoginData } from '@/components/layout/Login/LoginContent/LoginContent'
 import type { RegisterAccountInputData } from '@/components/layout/RegisterAccount/Content/Content'
-import { useRegister, useLogin, useLogout, useGetCurrentCustomer } from '@/hooks'
+import {
+  useRegister,
+  useLogin,
+  useLogout,
+  useGetCurrentCustomer,
+  useGetB2BUserQueries,
+} from '@/hooks'
+import { AccountType } from '@/lib/constants'
 import { cartKeys, loginKeys, wishlistKeys } from '@/lib/react-query/queryKeys'
 
 import type { CustomerAccount } from '@/lib/gql/types'
 
+type CustomerAccountWithRole = CustomerAccount & {
+  roleId?: number
+  roleName?: string
+}
 export interface AuthContextType {
   isAuthenticated: boolean
-  user?: CustomerAccount
+  user?: CustomerAccountWithRole
   login: (params: LoginData, onSuccessCallBack: () => void) => any
   createAccount: (params: RegisterAccountInputData, onSuccessCallBack?: () => void) => any
   logout: () => void
@@ -35,7 +47,7 @@ AuthContext.displayName = 'AuthContext'
 
 export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
-  const [user, setUser] = useState<CustomerAccount | undefined>(undefined)
+  const [user, setUser] = useState<CustomerAccountWithRole | undefined>(undefined)
   const { showSnackbar } = useSnackbarContext()
 
   const router = useRouter()
@@ -43,6 +55,9 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
   const { mutate } = useLogin()
   const { mutate: logOutUser } = useLogout(() => {
     setUser(undefined)
+    deleteCookie('behaviors', {
+      path: '/',
+    })
     router.push('/')
     queryClient.removeQueries({ queryKey: cartKeys.all })
     queryClient.removeQueries({ queryKey: loginKeys.user })
@@ -51,8 +66,34 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
 
   const queryClient = useQueryClient()
 
+  const isB2BUser = user?.accountType?.toLowerCase() === AccountType.B2B.toLowerCase()
+
+  const { data: userAccount } = useGetB2BUserQueries({
+    accountId: user?.id as number,
+    filter: `userId eq ${user?.userId}`,
+    isB2BUser: isB2BUser,
+  })
+
+  useEffect(() => {
+    const roles =
+      userAccount &&
+      userAccount?.items &&
+      userAccount?.items[0] &&
+      userAccount?.items[0]?.roles &&
+      userAccount?.items[0]?.roles[0]
+
+    if (!roles) return
+
+    const { roleId, roleName } = roles
+    const userWithRole = { ...user, roleId, roleName } as CustomerAccountWithRole
+    setUser(userWithRole)
+  }, [userAccount])
+
   const handleOnSuccess = (account: any, onSuccessCallBack?: () => void) => {
-    if (account?.customerAccount) setUser(account?.customerAccount)
+    if (account?.customerAccount) {
+      document.cookie = `behaviors=${account?.behaviors}; path=/`
+      setUser(account?.customerAccount)
+    }
 
     queryClient.invalidateQueries({ queryKey: cartKeys.all })
     onSuccessCallBack && onSuccessCallBack()
@@ -74,12 +115,11 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
         },
         password: params?.password,
       }
-      const account = await registerUserAccount.mutateAsync(createAccountAndLoginMutationVars)
-      if (account.userId) {
-        handleOnSuccess(account, onSuccessCallBack)
-        return account
-      }
-      return null
+      registerUserAccount.mutate(createAccountAndLoginMutationVars, {
+        onSuccess: (account: any) => {
+          handleOnSuccess(account, onSuccessCallBack)
+        },
+      })
     } catch (err: any) {
       showSnackbar('Registration Failed', 'error')
     }

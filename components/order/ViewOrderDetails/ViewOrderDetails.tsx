@@ -77,19 +77,20 @@ const ViewOrderDetails = (props: ViewOrderDetailsProps) => {
     payment?.billingInfo?.billingContact?.address as InputMaybe<CrAddressInput>
   )
 
+  const purchaseOrderDetails = orderGetters?.getOrderPurchaseOrderDetails(
+    payment?.billingInfo?.purchaseOrder
+  )
+  const paymentType = payment?.payment?.paymentType ?? ''
+
   const orderSummeryArgs = {
     nameLabel: t('order-summary'),
     subTotalLabel: `${t('subtotal')} (${t('item-quantity', { count: order.items?.length })})`,
     shippingTotalLabel: t('shipping'),
     taxLabel: t('estimated-tax'),
     totalLabel: t('total-price'),
-    subTotal: t('currency', { val: orderGetters.getSubtotal(order) }),
-    discountedSubtotal: t('currency', { val: orderGetters.getDiscountedSubtotal(order) }),
-    shippingTotal: orderGetters.getShippingTotal(order)
-      ? t('currency', { val: orderGetters.getShippingTotal(order) })
-      : t('free'),
-    tax: t('currency', { val: orderGetters.getTaxTotal(order) }),
-    total: t('currency', { val: orderTotal }),
+    handlingLabel: t('additional-handling'),
+
+    orderDetails: order,
   }
 
   const handleGoBackToOrderHistory = () => onGoBackToOrderHistory && onGoBackToOrderHistory()
@@ -209,6 +210,9 @@ const ViewOrderDetails = (props: ViewOrderDetailsProps) => {
                   cityOrTown={address.cityOrTown}
                   postalOrZipCode={address?.postalOrZipCode}
                   stateOrProvince={address.stateOrProvince}
+                  paymentType={paymentType}
+                  purchaseOrderNumber={purchaseOrderDetails?.purchaseOrderNumber}
+                  paymentTerm={purchaseOrderDetails?.paymentTerm}
                 />
               ) : (
                 <>

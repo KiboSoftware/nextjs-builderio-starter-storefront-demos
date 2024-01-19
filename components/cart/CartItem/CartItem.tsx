@@ -6,6 +6,7 @@ import {
   IconButton,
   SxProps,
   Theme,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material'
@@ -14,17 +15,21 @@ import { useTranslation } from 'next-i18next'
 
 import { CartItemActions, CartItemActionsMobile } from '@/components/cart'
 import { FulfillmentOptions, Price, ProductItem, QuantitySelector } from '@/components/common'
+import { QuoteStatus } from '@/lib/constants'
 import { cartGetters, productGetters } from '@/lib/getters'
 import { uiHelpers } from '@/lib/helpers'
 import type { FulfillmentOption } from '@/lib/types'
 
-import type { CrCartItem as CartItemType, CrProduct, Maybe } from '@/lib/gql/types'
+import type { CrCartItem as CartItemType, CrOrderItem, CrProduct, Maybe } from '@/lib/gql/types'
 
 interface CartItemProps {
-  cartItem: Maybe<CartItemType>
+  cartItem: Maybe<CartItemType> | Maybe<CrOrderItem>
   maxQuantity: number | undefined
   actions?: Array<string>
   fulfillmentOptions: FulfillmentOption[]
+  mode?: string
+  isQuote?: boolean
+  status?: string
   onQuantityUpdate: (cartItemId: string, quantity: number) => void
   onCartItemDelete: (cartItemId: string) => void
   onCartItemActionSelection: () => void
@@ -58,6 +63,14 @@ const styles = {
   subContainer: {
     flex: 1,
     padding: '0 0.5rem',
+    paddingTop: {
+      xs: 2,
+      md: 0,
+    },
+    paddingLeft: {
+      xs: 0,
+      md: 2,
+    },
   },
   icon: {
     alignItems: 'flex-start',
@@ -88,6 +101,9 @@ const CartItem = (props: CartItemProps) => {
     maxQuantity,
     actions,
     fulfillmentOptions,
+    mode,
+    status,
+    isQuote = false,
     onQuantityUpdate,
     onCartItemDelete,
     onCartItemActionSelection,
@@ -124,6 +140,7 @@ const CartItem = (props: CartItemProps) => {
                 options={productGetters.getOptions(cartItem?.product as CrProduct)}
                 link={getProductLink(cartItem?.product?.productCode as string)}
                 subscriptionFrequency={subscriptionDetails as string}
+                discounts={cartItem?.productDiscounts}
               >
                 <Box>
                   <Price
@@ -144,20 +161,30 @@ const CartItem = (props: CartItemProps) => {
                   />
                 </Box>
                 <Box sx={{ py: '0.5rem' }}>
-                  <QuantitySelector
-                    quantity={cartItemQuantity}
-                    label={t('qty')}
-                    maxQuantity={maxQuantity}
-                    onIncrease={() => handleQuantityUpdate(cartItemQuantity + 1)}
-                    onDecrease={() => handleQuantityUpdate(cartItemQuantity - 1)}
-                    onQuantityUpdate={(q) => handleQuantityUpdate(q)}
-                  />
+                  {QuoteStatus[status as string] === QuoteStatus.InReview ||
+                  QuoteStatus[status as string] === QuoteStatus.Completed ||
+                  QuoteStatus[status as string] === QuoteStatus.Expired ||
+                  (!mode && isQuote) ? (
+                    <Typography>
+                      {t('qty')}:{cartItemQuantity}
+                    </Typography>
+                  ) : (
+                    <QuantitySelector
+                      quantity={cartItemQuantity}
+                      label={t('qty')}
+                      maxQuantity={maxQuantity}
+                      onIncrease={() => handleQuantityUpdate(cartItemQuantity + 1)}
+                      onDecrease={() => handleQuantityUpdate(cartItemQuantity - 1)}
+                      onQuantityUpdate={(q) => handleQuantityUpdate(q)}
+                    />
+                  )}
                 </Box>
               </ProductItem>
 
-              <Box sx={{ display: { xs: 'none', sm: 'none', md: 'block', ml: 1 } }}>
+              {/* TBD */}
+              {/* <Box sx={{ display: { xs: 'none', sm: 'none', md: 'block', ml: 1 } }}>
                 <CartItemActions />
-              </Box>
+              </Box> */}
             </Box>
 
             <Divider
@@ -167,32 +194,49 @@ const CartItem = (props: CartItemProps) => {
             />
 
             <Box sx={{ ...styles.subContainer }}>
-              <FulfillmentOptions
-                fulfillmentOptions={fulfillmentOptions}
-                selected={cartItem?.fulfillmentMethod || ''}
-                onFulfillmentOptionChange={(fulfillmentMethod: string) =>
-                  handleFulfillmentOptionChange(fulfillmentMethod, cartItem?.id as string)
-                }
-                onStoreSetOrUpdate={() => handleProductPickupLocation(cartItem?.id as string)} // change store: Open storelocator modal. Should not change global store.
-              />
+              {QuoteStatus[status as string] === QuoteStatus.InReview ||
+              QuoteStatus[status as string] === QuoteStatus.Completed ||
+              QuoteStatus[status as string] === QuoteStatus.Expired ||
+              (!mode && isQuote) ? (
+                <Typography>
+                  {t('fulfillment-options')} {cartItem?.fulfillmentMethod} -{' '}
+                  {cartItem?.fulfillmentLocationCode}
+                </Typography>
+              ) : (
+                <FulfillmentOptions
+                  title={t('fulfillment-options')}
+                  fulfillmentOptions={fulfillmentOptions}
+                  selected={cartItem?.fulfillmentMethod || ''}
+                  onFulfillmentOptionChange={(fulfillmentMethod: string) =>
+                    handleFulfillmentOptionChange(fulfillmentMethod, cartItem?.id as string)
+                  }
+                  onStoreSetOrUpdate={() => handleProductPickupLocation(cartItem?.id as string)} // change store: Open storelocator modal. Should not change global store.
+                />
+              )}
             </Box>
           </Box>
 
           <Box sx={{ ...styles.icon }}>
-            <Box sx={{ display: { xs: 'block', sm: 'block', md: 'none' } }}>
+            {/* TBD */}
+            {/* <Box sx={{ display: { xs: 'block', sm: 'block', md: 'none' } }}>
               <CartItemActionsMobile
                 actions={actions || []}
                 onMenuItemSelection={() => handleActionSelection()}
               />
-            </Box>
-            <IconButton
-              sx={{ p: 0.5 }}
-              aria-label="item-delete"
-              name="item-delete"
-              onClick={() => handleDelete(cartItem?.id as string)}
-            >
-              <Delete />
-            </IconButton>
+            </Box> */}
+            {QuoteStatus[status as string] !== QuoteStatus.InReview &&
+              QuoteStatus[status as string] !== QuoteStatus.Completed &&
+              QuoteStatus[status as string] !== QuoteStatus.Expired &&
+              (mode === 'create' || mode === 'edit' || !isQuote) && (
+                <IconButton
+                  sx={{ p: 0.5 }}
+                  aria-label="item-delete"
+                  name="item-delete"
+                  onClick={() => handleDelete(cartItem?.id as string)}
+                >
+                  <Delete />
+                </IconButton>
+              )}
           </Box>
         </Box>
       </Card>

@@ -7,16 +7,19 @@ import { FulfillmentOptions } from '@/lib/constants'
 import { cartGetters } from '@/lib/getters/cartGetters'
 import { FulfillmentOption } from '@/lib/types'
 
-import type { CrCartItem, Location, Maybe } from '@/lib/gql/types'
+import type { CrCartItem, CrOrderItem, Location, Maybe } from '@/lib/gql/types'
 
 interface CartItemListProps {
-  cartItems: Maybe<CrCartItem>[]
+  cartItems: Maybe<CrCartItem>[] | Maybe<CrOrderItem>[]
   fulfillmentLocations: Location[]
   purchaseLocation: Location
+  status?: string
+  mode?: string
+  isQuote?: boolean
   onCartItemQuantityUpdate: (cartItemId: string, quantity: number) => void
   onCartItemDelete: (cartItemId: string) => void
   onCartItemActionSelection: () => void
-  onFulfillmentOptionSelection: (fulfillmentMethod: string, cartItemId: string) => void
+  onFulfillmentOptionChange: (fulfillmentMethod: string, cartItemId: string) => void
   onProductPickupLocation: (cartItemId: string) => void
 }
 
@@ -25,10 +28,13 @@ const CartItemList = (props: CartItemListProps) => {
     cartItems,
     fulfillmentLocations = [],
     purchaseLocation,
+    status,
+    mode,
+    isQuote,
     onCartItemQuantityUpdate,
     onCartItemDelete,
     onCartItemActionSelection,
-    onFulfillmentOptionSelection,
+    onFulfillmentOptionChange,
     onProductPickupLocation,
   } = props
 
@@ -49,7 +55,7 @@ const CartItemList = (props: CartItemListProps) => {
 
   return (
     <TransitionGroup>
-      {cartItems?.map((item: Maybe<CrCartItem>) => (
+      {cartItems?.map((item: Maybe<CrCartItem> | Maybe<CrOrderItem>) => (
         <Collapse
           key={`${item?.id}`}
           sx={{
@@ -62,11 +68,14 @@ const CartItemList = (props: CartItemListProps) => {
             cartItem={item}
             key={item?.id}
             maxQuantity={undefined}
+            status={status}
+            mode={mode}
+            isQuote={isQuote}
             onQuantityUpdate={handleQuantityUpdate}
             onCartItemDelete={handleCartItemDelete}
             onCartItemActionSelection={handleCartItemActionSelection}
             fulfillmentOptions={handleSupportedFulfillmentOptions(item as CrCartItem)}
-            onFulfillmentOptionChange={onFulfillmentOptionSelection}
+            onFulfillmentOptionChange={onFulfillmentOptionChange}
             onProductPickupLocation={onProductPickupLocation}
           />
           <Box sx={{ display: { xs: 'block', sm: 'block', md: 'none' } }}>

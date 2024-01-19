@@ -45,6 +45,7 @@ interface ReviewStepProps {
   checkout: CrOrder | Checkout
   shipItems?: Maybe<CrOrderItem>[]
   pickupItems?: Maybe<CrOrderItem>[]
+  digitalItems?: Maybe<CrOrderItem>[]
   personalDetails?: any
   orderSummaryProps: any
   isMultiShipEnabled: boolean
@@ -103,6 +104,7 @@ const ReviewStep = (props: ReviewStepProps) => {
     orderSummaryProps,
     shipItems,
     pickupItems,
+    digitalItems,
     onCreateOrder,
     isMultiShipEnabled,
   } = props
@@ -160,7 +162,7 @@ const ReviewStep = (props: ReviewStepProps) => {
           password: formData.password,
         })
 
-        if (account.userId) {
+        if (account?.customerAccount.userId) {
           updateUserOrder.mutateAsync(checkout.id as string)
         }
       }
@@ -177,19 +179,12 @@ const ReviewStep = (props: ReviewStepProps) => {
   const onInvalidForm = () => console.log('Invalid Form')
   const handleComplete = () => handleSubmit(onValid, onInvalidForm)()
 
-  const orderPriceProps: OrderPriceProps = {
+  const orderPriceProps = {
     subTotalLabel: t('subtotal'),
     shippingTotalLabel: t('shipping'),
-    taxLabel: t('estimated-tax'),
+    handlingLabel: t('handling'),
     totalLabel: t('total'),
-    subTotal: t('currency', { val: subTotal }),
-    discountedSubtotal:
-      discountedSubtotal > 0 && discountedSubtotal !== subTotal
-        ? t('currency', { val: discountedSubtotal })
-        : '',
-    shippingTotal: t('currency', { val: shippingTotal || 0 }),
-    tax: t('currency', { val: taxTotal }),
-    total: t('currency', { val: total }),
+    orderDetails: checkout,
   }
 
   return (
@@ -258,6 +253,7 @@ const ReviewStep = (props: ReviewStepProps) => {
                       price={productGetters.getPrice(product).regular?.toString()}
                       salePrice={productGetters.getPrice(product).special?.toString()}
                       expectedDeliveryDate={item?.expectedDeliveryDate}
+                      discounts={item?.productDiscounts}
                     />
                   </Stack>
                 </>
@@ -291,6 +287,16 @@ const ReviewStep = (props: ReviewStepProps) => {
         </Stack>
       )}
 
+      {digitalItems && digitalItems.length > 0 && (
+        <Stack gap={4}>
+          <Typography variant="h3" component="h3" sx={{ fontWeight: 'bold' }} color="text.primary">
+            {t('digital-products')}
+          </Typography>
+          <ProductItemList items={digitalItems} testId={'review-digital-items'} />
+          <Divider sx={{ mb: '1.438rem' }} />
+        </Stack>
+      )}
+
       <OrderPrice {...orderPriceProps} />
 
       <Box sx={{ mt: '31px', mb: '35px' }}>
@@ -303,7 +309,7 @@ const ReviewStep = (props: ReviewStepProps) => {
               data-testid="termsConditions"
               size="medium"
               color="primary"
-              value={isAgreeWithTermsAndConditions}
+              checked={isAgreeWithTermsAndConditions}
               onChange={handleAgreeTermsConditions}
             />
           }
