@@ -594,7 +594,7 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
                 ) : (
                   <FavoriteBorderRoundedIcon sx={{ color: 'grey.600', marginRight: '14px' }} />
                 )}
-                {t('add-to-wishlist')}
+                {t('add-to-favorites')}
               </LoadingButton>
               <Button variant="contained" color="inherit" fullWidth>
                 {t('one-click-checkout')}

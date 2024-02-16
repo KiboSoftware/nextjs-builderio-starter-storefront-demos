@@ -39,7 +39,7 @@ describe('[component] - ShippingMethod', () => {
     setup()
     const shippingMethod = screen.getByTestId('shipping-method')
     const shipItemTitle = screen.getByTestId('ship-title')
-    const pickupItemTitle = screen.getByTestId('pickup-title')
+    const pickupItemTitle = screen.getByTestId('pickup')
     const kiboSelect = screen.getByTestId('kibo-select-component')
     const productItems = screen.getAllByTestId('product-item-component')
 
@@ -64,7 +64,7 @@ describe('[component] - ShippingMethod', () => {
     const shipItemTitle = screen.getByTestId('ship-title')
     expect(shipItemTitle).toBeInTheDocument()
 
-    const pickupItemTitle = screen.queryByTestId('pickup-title')
+    const pickupItemTitle = screen.queryByTestId('pickup')
     expect(pickupItemTitle).not.toBeInTheDocument()
   })
 
@@ -82,7 +82,7 @@ describe('[component] - ShippingMethod', () => {
     const shipItemTitle = screen.queryByTestId('ship-title')
     expect(shipItemTitle).not.toBeInTheDocument()
 
-    const pickupItemTitle = screen.queryByTestId('pickup-title')
+    const pickupItemTitle = screen.queryByTestId('pickup')
     expect(pickupItemTitle).not.toBeInTheDocument()
 
     expect(screen.getAllByTestId('product-item-component').length).toBe(
@@ -104,7 +104,7 @@ describe('[component] - ShippingMethod', () => {
     const shipItemTitle = screen.getByTestId('ship-title')
     expect(shipItemTitle).toBeInTheDocument()
 
-    const pickupItemTitle = screen.getByTestId('pickup-title')
+    const pickupItemTitle = screen.getByTestId('pickup')
     expect(pickupItemTitle).toBeInTheDocument()
   })
 })

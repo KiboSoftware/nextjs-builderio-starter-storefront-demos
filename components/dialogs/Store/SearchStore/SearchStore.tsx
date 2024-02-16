@@ -114,8 +114,8 @@ const SearchStore = (props: SearchStoreProps) => {
       <FullWidthDivider />
       <Typography variant="body2" py={2} textAlign="center">
         {initialState
-          ? t('find-stores-within-miles')
-          : t('stores-within-miles', { count: locations?.length || 0 })}
+          ? t('find-locations-within-miles')
+          : t('locations-within-miles', { count: locations?.length || 0 })}
       </Typography>
       {locations && locations?.length > 0 && (
         <Box>

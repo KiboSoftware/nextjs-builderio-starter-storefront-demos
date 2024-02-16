@@ -63,7 +63,7 @@ describe('[components] Store Locator Dialog integration', () => {
     expect(await screen.findByText(/zip-code/i)).toBeVisible()
     expect(await screen.findAllByRole('button', { name: /search/i })).toHaveLength(3)
     expect(await screen.findByText(/use-current-location/i)).toBeVisible()
-    expect(await screen.findByText(/find-stores-within-miles/i)).toBeVisible()
+    expect(await screen.findByText(/find-locations-within-miles/i)).toBeVisible()
   })
 
   it('should close dialog when user clicks on closeIcon button', async () => {

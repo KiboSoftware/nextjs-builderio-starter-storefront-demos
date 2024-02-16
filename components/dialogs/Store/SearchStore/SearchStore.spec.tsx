@@ -35,7 +35,7 @@ describe('[components] Search Store', () => {
     expect(screen.getByTestId('search-bar-component')).toBeVisible()
     expect(screen.getByRole('button', { name: /search/i })).toBeVisible()
     expect(screen.getByText(/use-current-location/i)).toBeVisible()
-    expect(screen.getByText(/find-stores-within-miles/i)).toBeVisible()
+    expect(screen.getByText(/find-locations-within-miles/i)).toBeVisible()
     expect(screen.getByTestId('kibo-radio-mock')).toBeVisible()
   })
 
@@ -53,13 +53,13 @@ describe('[components] Search Store', () => {
     })
   })
 
-  it('should display stores-within-miles message if location data present', async () => {
+  it('should display locations-within-miles message if location data present', async () => {
     setup()
 
     const location = storeLocationGetters.getLocations(
       Common.args?.spLocations as Maybe<Location>[]
     )
     expect(location).toHaveLength(1)
-    expect(screen.getByText(/stores-within-miles/i)).toBeVisible()
+    expect(screen.getByText(/locations-within-miles/i)).toBeVisible()
   })
 })

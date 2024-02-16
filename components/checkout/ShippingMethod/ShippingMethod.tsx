@@ -49,7 +49,7 @@ const ShipItemList = (shipProps: ShipItemListProps) => {
   return (
     <Box data-testid="ship-items">
       <Typography sx={styles.shippingType} py={2} data-testid="ship-title">
-        {t('ship')}
+        {t('shipping')}
       </Typography>
       <Box pr={2}>
         <KiboSelect
@@ -95,7 +95,7 @@ const PickupItemList = (pickupProps: PickupItemListProps) => {
         <>
           <Divider orientation="horizontal" flexItem />
           <Box pt={2} pb={3}>
-            <Typography sx={styles.shippingType} py={2} data-testid="pickup-title">
+            <Typography sx={styles.shippingType} py={2} data-testid="pickup">
               {t('pickup')}
             </Typography>
           </Box>

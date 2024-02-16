@@ -89,7 +89,7 @@ const WishlistTemplate = () => {
             ))
           ) : (
             <Box>
-              <Typography variant="subtitle2">{t('empty-wishlist-message')}</Typography>
+              <Typography variant="subtitle2">{t('empty-favorites-message')}</Typography>
               <Box maxWidth="23.5rem">
                 <Button
                   variant="contained"

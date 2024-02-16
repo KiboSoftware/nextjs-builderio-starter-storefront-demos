@@ -98,7 +98,7 @@ module.exports = {
         value: 'DirectShip',
         code: 'DS',
         name: 'Direct Ship',
-        label: 'Ship to Home',
+        label: 'Ship',
         details: 'Available to Ship',
         unavailableDetails: 'Unavailable to Ship',
         isRequired: false,

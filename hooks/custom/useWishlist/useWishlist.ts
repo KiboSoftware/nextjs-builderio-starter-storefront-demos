@@ -78,10 +78,10 @@ export const useWishlist = () => {
         ...variables,
         customerAccountId: customerAccount?.id as number,
       })
-      showSnackbar(t('added-to-wishlist'), 'success')
+      showSnackbar(t('added-to-favorites'), 'success')
     } else {
       await deleteWishlistItem.mutateAsync(variables)
-      showSnackbar(t('removed-from-wishlist'), 'success')
+      showSnackbar(t('removed-from-favorites'), 'success')
     }
 
     // showModal({

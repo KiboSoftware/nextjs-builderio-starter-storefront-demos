@@ -52,7 +52,7 @@ describe('[component] Wishlist Template component', () => {
 
     render(<Empty {...Empty?.args} />)
 
-    const emptyWishlist = screen.getByText('empty-wishlist-message')
+    const emptyWishlist = screen.getByText('empty-favorites-message')
     const shopNowButton = screen.getByRole('button', { name: 'shop-now' })
 
     expect(emptyWishlist).toBeVisible()

@@ -295,7 +295,7 @@ describe('[component] - ProductDetailTemplate integration', () => {
     const { user } = setup()
 
     const addToWishlistButton = screen.getByRole('button', {
-      name: 'add-to-wishlist',
+      name: 'add-to-favorites',
     })
 
     await user.click(addToWishlistButton)
@@ -310,7 +310,7 @@ describe('[component] - ProductDetailTemplate integration', () => {
     const { user } = setup()
 
     const addToWishlistButton = screen.getByRole('button', {
-      name: 'add-to-wishlist',
+      name: 'add-to-favorites',
     })
 
     await user.click(addToWishlistButton)

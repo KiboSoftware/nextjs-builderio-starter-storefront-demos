@@ -188,10 +188,10 @@ const DetailsStep = <T extends CrOrder | Checkout>(props: DetailsProps<T>) => {
             {t('full-rewards-program-benifits')}
           </Grid>
           <Grid item xs={12}>
-            <IconButton aria-label={t('manage-your-wishlist')}>
+            <IconButton aria-label={t('manage-your-favorites')}>
               <FavoriteBorder fontSize="medium" />
             </IconButton>
-            {t('manage-your-wishlist')}
+            {t('manage-your-favorites')}
           </Grid>
         </Grid>
       </Stack>

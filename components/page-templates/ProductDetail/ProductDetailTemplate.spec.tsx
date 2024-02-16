@@ -103,7 +103,7 @@ describe('[component] Product Detail Template component', () => {
     ).toBeVisible()
     expect(
       screen.getByRole('button', {
-        name: 'add-to-wishlist',
+        name: 'add-to-favorites',
       })
     ).toBeVisible()
     expect(

@@ -49,7 +49,7 @@ describe('[component] - ShippingMethod', () => {
     const shipItemTitle = screen.getByTestId('ship-title')
     expect(shipItemTitle).toBeInTheDocument()
 
-    const pickupItemTitle = screen.queryByTestId('pickup-title')
+    const pickupItemTitle = screen.queryByTestId('pickup')
     expect(pickupItemTitle).toBeInTheDocument()
 
     const kiboSelectBtn = screen.getByRole('button', { name: 'Select Shipping Option' })

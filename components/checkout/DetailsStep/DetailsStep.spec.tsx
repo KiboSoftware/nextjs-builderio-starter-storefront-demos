@@ -57,7 +57,7 @@ describe('[components] Details', () => {
         const fasterCheckoutText = screen.getByText(/faster-checkout/i)
         const earnCreditsText = screen.getByText(/earn-credits-with-every-purchase/i)
         const fullRewardsText = screen.getByText(/full-rewards-program-benifits/i)
-        const manageYourWishList = screen.getByText(/manage-your-wishlist/i)
+        const manageYourWishList = screen.getByText(/manage-your-favorites/i)
 
         expect(personalDetailsHeader).toBeVisible()
         expect(enjoyPerksText).toBeVisible()

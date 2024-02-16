@@ -54,7 +54,7 @@ const FulfillmentOptions = (props: FulfillmentOptionsProps) => {
       disabled: option?.disabled,
       label: (
         <FulfillmentOptionLabel
-          label={option?.label as string}
+          label={t(`${option?.label}`)}
           details={option?.details}
           onStoreSelection={onStoreSetOrUpdate}
           {...(!option?.disabled &&

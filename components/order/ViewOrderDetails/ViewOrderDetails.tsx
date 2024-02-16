@@ -172,7 +172,7 @@ const ViewOrderDetails = (props: ViewOrderDetailsProps) => {
             <Box>
               <Box sx={{ ...styles.container }}>
                 <Typography variant="h3" fontWeight={700} gutterBottom>
-                  {t('pickup-title')}
+                  {t('pickup')}
                 </Typography>
                 <Box sx={{ ...styles.heading }}>
                   <Typography variant="subtitle2" fontWeight={700}>
