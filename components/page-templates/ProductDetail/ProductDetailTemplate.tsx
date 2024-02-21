@@ -179,10 +179,15 @@ const ProductDetailTemplate = (props: ProductDetailTemplateProps) => {
     },
     productPriceResponse?.price as ProductPrice
   )
-  const { data: locationInventory } = useGetProductInventory(
-    (variationProductCode || productCode) as string,
-    selectedFulfillmentOption?.location?.code as string
-  )
+
+  const { data: locationInventory } = useGetProductInventory({
+    productCode: (variationProductCode || productCode) as string,
+    isEnabled: isValidForOneTime,
+    locationCodes: selectedFulfillmentOption?.location?.code as string,
+    // selectedFulfillmentOption?.location?.code as string
+  })
+
+  console.log('locationInventory', locationInventory, variationProductCode, productCode)
 
   const quantityLeft = productGetters.getAvailableItemCount(
     currentProduct,

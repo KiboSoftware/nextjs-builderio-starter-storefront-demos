@@ -18,7 +18,7 @@ export interface UseProductLocationInventoryType {
   isSuccess: boolean
 }
 
-const loadProductLocationInventory = async (productCode: string, locationCodes: string) => {
+const loadProductLocationInventory = async (productCode: string, locationCodes?: string) => {
   const client = makeGraphQLClient()
 
   const response = await client.request({
@@ -46,10 +46,15 @@ const loadProductLocationInventory = async (productCode: string, locationCodes: 
  * @returns 'response?.productLocationInventory?.items', which contains list of available inventories.
  */
 
-export const useGetProductInventory = (
-  productCode: string,
-  locationCodes: string
-): UseProductLocationInventoryType => {
+export const useGetProductInventory = ({
+  productCode,
+  locationCodes,
+  isEnabled,
+}: {
+  productCode: string
+  locationCodes?: string
+  isEnabled?: boolean
+}): UseProductLocationInventoryType => {
   const {
     data = [],
     isLoading,
@@ -58,7 +63,7 @@ export const useGetProductInventory = (
     queryKey: inventoryKeys.inventoryParams(productCode, locationCodes),
     queryFn: () => loadProductLocationInventory(productCode, locationCodes),
     refetchOnWindowFocus: false,
-    enabled: !!(productCode && locationCodes),
+    enabled: isEnabled,
   })
 
   return { data, isLoading, isSuccess }

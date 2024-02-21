@@ -116,7 +116,7 @@ export const ordersKeys = {
 
 export const inventoryKeys = {
   all: ['inventory'] as const,
-  inventoryParams: (productCode: string, locationCodes: string) =>
+  inventoryParams: (productCode: string, locationCodes?: string) =>
     [...shippingMethodKeys.all, productCode, locationCodes] as const,
 }
 

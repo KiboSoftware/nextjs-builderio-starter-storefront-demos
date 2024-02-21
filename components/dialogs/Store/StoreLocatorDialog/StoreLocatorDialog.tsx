@@ -49,10 +49,11 @@ const StoreLocatorDialog = (props: StoreLocatorProps) => {
   const locationCodes: string = storeLocationGetters.getLocationCodes(
     locations as Maybe<Location>[]
   )
-  const { data: locationInventory } = useGetProductInventory(
-    (product?.variationProductCode || product?.productCode) as string,
-    locationCodes
-  )
+  const { data: locationInventory } = useGetProductInventory({
+    productCode: (product?.variationProductCode || product?.productCode) as string,
+    locationCodes,
+    isEnabled: !!(product?.variationProductCode || product?.productCode),
+  })
 
   const initialState = Boolean(!searchParams.filter)
 
