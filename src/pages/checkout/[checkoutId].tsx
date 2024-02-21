@@ -56,7 +56,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       checkout,
-      perks,
+      perks: perks || null,
       checkoutId,
       isMultiShipEnabled: isMultiShipEnabled,
       ...(await serverSideTranslations(locale as string, ['common'])),
