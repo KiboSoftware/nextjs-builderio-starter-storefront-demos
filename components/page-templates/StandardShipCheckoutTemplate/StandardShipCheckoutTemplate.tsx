@@ -32,10 +32,11 @@ import type { CrOrder, CrOrderInput, PaymentActionInput } from '@/lib/gql/types'
 interface StandardShipCheckoutProps {
   checkout: CrOrder
   isMultiShipEnabled: boolean
+  perks?: any
 }
 
 const StandardShipCheckoutTemplate = (props: StandardShipCheckoutProps) => {
-  const { checkout: initialCheckout, isMultiShipEnabled } = props
+  const { checkout: initialCheckout, isMultiShipEnabled, perks } = props
   const router = useRouter()
   const [promoError, setPromoError] = useState<string>('')
   const { checkoutId } = router.query
@@ -189,6 +190,7 @@ const StandardShipCheckoutTemplate = (props: StandardShipCheckoutProps) => {
         <DetailsStep
           checkout={order as CrOrder}
           updateCheckoutPersonalInfo={updateCheckoutPersonalInfo}
+          perks={perks}
         />
         <StandardShippingStep
           checkout={order as CrOrder}

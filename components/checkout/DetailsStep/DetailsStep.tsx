@@ -195,6 +195,7 @@ const DetailsStep = <T extends CrOrder | Checkout>(props: DetailsProps<T>) => {
           </Grid>
         </Grid>
       </Stack>
+      {perks}
     </Stack>
   )
 }

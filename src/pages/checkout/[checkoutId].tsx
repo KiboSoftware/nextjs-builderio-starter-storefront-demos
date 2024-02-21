@@ -1,3 +1,4 @@
+import builder, { BuilderComponent } from '@builder.io/react'
 import getConfig from 'next/config'
 import { useTranslation } from 'next-i18next'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
@@ -16,7 +17,15 @@ interface CheckoutPageProps {
   checkoutId: string
   checkout: CrOrder | Checkout
   isMultiShipEnabled?: boolean
+  perks?: any
 }
+
+const { publicRuntimeConfig } = getConfig()
+const apiKey = publicRuntimeConfig?.builderIO?.apiKey
+
+builder.init(apiKey)
+
+builder.apiVersion = 'v3'
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { locale, params, req, res } = context
@@ -26,6 +35,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const checkout = isMultiShipEnabled
     ? await getMultiShipCheckout(checkoutId, req as NextApiRequest, res as NextApiResponse)
     : await getCheckout(checkoutId, req as NextApiRequest, res as NextApiResponse)
+
+  const urlPath = '/' + ((params?.page as [])?.join('/') || '')
+
+  const perks = await builder.get('perks', { userAttributes: { urlPath: urlPath } }).toPromise()
 
   if (!checkout) {
     return { notFound: true }
@@ -43,6 +56,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       checkout,
+      perks,
       checkoutId,
       isMultiShipEnabled: isMultiShipEnabled,
       ...(await serverSideTranslations(locale as string, ['common'])),
@@ -53,7 +67,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const CheckoutPage: NextPage<CheckoutPageProps> = (props) => {
   const { t } = useTranslation('common')
   const steps = [t('details'), t('shipping'), t('payment'), t('review')]
-  const { checkout, isMultiShipEnabled, ...rest } = props
+  const { checkout, perks, isMultiShipEnabled, ...rest } = props
   const quoteCheckout = !isMultiShipEnabled ? (checkout as CrOrder) : null
   const quoteId = quoteCheckout?.originalQuoteId
   return (
@@ -70,6 +84,7 @@ const CheckoutPage: NextPage<CheckoutPageProps> = (props) => {
             {...rest}
             checkout={checkout as CrOrder}
             isMultiShipEnabled={!!isMultiShipEnabled}
+            perks={<BuilderComponent model="perks" content={perks} />}
           />
         )}
       </CheckoutStepProvider>
