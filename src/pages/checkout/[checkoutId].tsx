@@ -1,8 +1,11 @@
-import builder, { BuilderComponent } from '@builder.io/react'
+import builder, { Builder, BuilderComponent } from '@builder.io/react'
+import { NoSsr } from '@mui/material'
 import getConfig from 'next/config'
+import ErrorPage from 'next/error'
 import { useTranslation } from 'next-i18next'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 
+import { checkoutMock, orderMock } from '@/__mocks__/stories'
 import {
   StandardShipCheckoutTemplate,
   MultiShipCheckoutTemplate,
@@ -40,13 +43,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const perks = await builder.get('perks', { userAttributes: { urlPath: urlPath } }).toPromise()
 
-  if (!checkout) {
-    return { notFound: true }
-  }
-
   const ipAddress = req?.headers['x-forwarded-for'] as string
 
-  updateOrder(
+  await updateOrder(
     checkoutId,
     { ...checkout, ipAddress: ipAddress?.split(',')[0] } as CrOrderInput,
     req as NextApiRequest,
@@ -65,13 +64,22 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 }
 
 const CheckoutPage: NextPage<CheckoutPageProps> = (props) => {
+  const { perks, isMultiShipEnabled, ...rest } = props
+
+  let checkout = props.checkout
+
   const { t } = useTranslation('common')
+
+  if (!checkout) {
+    if (!builder.editingMode && !Builder.isServer) return <ErrorPage statusCode={404} />
+    else checkout = isMultiShipEnabled ? checkoutMock.checkout : orderMock.checkout
+  }
+
   const steps = [t('details'), t('shipping'), t('payment'), t('review')]
-  const { checkout, perks, isMultiShipEnabled, ...rest } = props
   const quoteCheckout = !isMultiShipEnabled ? (checkout as CrOrder) : null
   const quoteId = quoteCheckout?.originalQuoteId
   return (
-    <>
+    <NoSsr>
       <CheckoutStepProvider steps={steps} initialActiveStep={quoteId ? 2 : 0}>
         {isMultiShipEnabled ? (
           <MultiShipCheckoutTemplate
@@ -88,7 +96,7 @@ const CheckoutPage: NextPage<CheckoutPageProps> = (props) => {
           />
         )}
       </CheckoutStepProvider>
-    </>
+    </NoSsr>
   )
 }
 
