@@ -9,6 +9,7 @@ import {
   ListItem,
   ListItemText,
   Paper,
+  Skeleton,
   Stack,
   SxProps,
   Theme,
@@ -70,16 +71,63 @@ const Title = ({ heading }: { heading: string }) => {
     </ListItem>
   )
 }
-
-const Content = (props: ListItemProps) => {
-  const { code, name, path = '', onSearchSuggestionClose } = props
+const Content = (props: ListItemProps & { imageUrl?: string }) => {
+  const { code, name, path = '', onSearchSuggestionClose, imageUrl } = props
 
   return (
     <Link href={`${path}${code}`} passHref>
-      <ListItem button key={code} onClick={onSearchSuggestionClose}>
+      <ListItem
+        key={code}
+        onClick={onSearchSuggestionClose}
+        sx={{ display: 'flex', alignItems: 'center' }}
+      >
+        {imageUrl && (
+          <Box
+            component="img"
+            src={imageUrl}
+            alt={name}
+            sx={{
+              width: 40,
+              height: 40,
+              objectFit: 'contain',
+              borderRadius: 1,
+              marginRight: 1,
+            }}
+          />
+        )}
         <ListItemText primary={name} sx={{ ...style.listItemText }} />
       </ListItem>
     </Link>
+  )
+}
+
+const SearchSuggestionSkeletons = () => {
+  return (
+    <>
+      <List sx={{ ...style.list }} role="group">
+        <Title heading="suggestions" />
+        {[1, 2, 3].map((item) => (
+          <ListItem key={item} sx={{ display: 'flex', alignItems: 'center' }}>
+            <Skeleton
+              variant="rectangular"
+              width={40}
+              height={40}
+              sx={{ borderRadius: 1, marginRight: 1 }}
+            />
+            <Skeleton variant="text" width="80%" height={24} />
+          </ListItem>
+        ))}
+      </List>
+      <Divider />
+      <List sx={{ ...style.list }} role="group">
+        <Title heading="categories" />
+        {[1, 2, 3].map((item) => (
+          <ListItem key={item}>
+            <Skeleton variant="text" width="100%" height={24} />
+          </ListItem>
+        ))}
+      </List>
+    </>
   )
 }
 
@@ -87,6 +135,7 @@ const SearchSuggestions = (props: SearchSuggestionsProps) => {
   const { onEnterSearch, isViewSearchPortal } = props
   const { publicRuntimeConfig } = getConfig()
   const router = useRouter()
+  const { t } = useTranslation('common')
 
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const [searchTerm, setSearchTerm] = useState<string>('')
@@ -133,35 +182,52 @@ const SearchSuggestions = (props: SearchSuggestionsProps) => {
         sx={{ position: 'absolute', top: '50px', width: '100%' }}
       >
         <Paper sx={{ ...style.paper }}>
-          <List sx={{ ...style.list }} role="group">
-            <Title heading="suggestions" />
-            {productSuggestionGroup?.suggestions?.map((product) => (
-              <Content
-                key={product?.suggestion?.productCode}
-                code={product?.suggestion?.productCode}
-                name={product?.suggestion?.productName}
-                path={'/product/'}
-                onSearchSuggestionClose={handleClose}
-              />
-            ))}
-          </List>
-          <Divider />
-          <List sx={{ ...style.list }} role="group">
-            <Title heading="categories" />
-            {categorySuggestionGroup?.suggestions?.map((category) => (
-              <Content
-                key={category?.suggestion?.categoryCategoryCode}
-                code={category?.suggestion?.categoryCategoryCode}
-                name={category?.suggestion?.categoryName}
-                path={'/category/'}
-                onSearchSuggestionClose={handleClose}
-              />
-            ))}
-          </List>
+          {searchSuggestionResult.isLoading ? (
+            <SearchSuggestionSkeletons />
+          ) : (
+            <>
+              {productSuggestionGroup?.suggestions &&
+                productSuggestionGroup.suggestions.length > 0 && (
+                  <List sx={{ ...style.list }} role="group">
+                    <Title heading="suggestions" />
+                    {productSuggestionGroup?.suggestions?.map((product) => (
+                      <Content
+                        key={product?.suggestion?.productCode}
+                        code={product?.suggestion?.productCode}
+                        name={product?.suggestion?.productName}
+                        path={'/product/'}
+                        imageUrl={product?.suggestion?.productImageUrls?.[0]} // Use first image URL
+                        onSearchSuggestionClose={handleClose}
+                      />
+                    ))}
+                  </List>
+                )}
+
+              {categorySuggestionGroup?.suggestions &&
+                categorySuggestionGroup.suggestions.length > 0 && (
+                  <>
+                    <Divider />
+                    <List sx={{ ...style.list }} role="group">
+                      <Title heading="categories" />
+                      {categorySuggestionGroup?.suggestions?.map((category) => (
+                        <Content
+                          key={category?.suggestion?.categoryCategoryCode}
+                          code={category?.suggestion?.categoryCategoryCode}
+                          name={category?.suggestion?.categoryName}
+                          path={'/category/'}
+                          onSearchSuggestionClose={handleClose}
+                        />
+                      ))}
+                    </List>
+                  </>
+                )}
+            </>
+          )}
         </Paper>
       </Collapse>
       <Backdrop open={isOpen} onClick={handleClose} data-testid="backdrop"></Backdrop>
     </Stack>
   )
 }
+
 export default SearchSuggestions
